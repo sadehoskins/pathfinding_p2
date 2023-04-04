@@ -23,10 +23,22 @@ int main() {
     RenderTexture2D canvas = LoadRenderTexture(Game::ScreenWidth, Game::ScreenHeight);
     float renderScale{}; //those two are relevant to drawing and code-cleanliness
     Rectangle renderRec{};
+    bool fullscreen;
 
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
+        if (IsKeyDown(KEY_LEFT_ALT) && IsKeyPressed(KEY_ENTER)) { //Fullscreen logic.
+            if (fullscreen) {
+                ToggleFullscreen();
+                SetWindowSize(Game::ScreenWidth,Game::ScreenHeight);
+                fullscreen = !fullscreen;
+            } else {
+                SetWindowSize(GetMonitorWidth(GetCurrentMonitor()), GetMonitorHeight(GetCurrentMonitor()));
+                fullscreen = !fullscreen;
+                ToggleFullscreen();
+            }
+        }
         // Updates that are made by frame are coded here
         // ...
         // ...
