@@ -1,4 +1,5 @@
 ﻿#include <cstdlib>
+#include <algorithm>
 
 #include "raylib.h"
 
@@ -20,7 +21,7 @@ int main() {
     // ...
     Texture2D myTexture = LoadTexture("assets/graphics/testimage.png");
     RenderTexture2D canvas = LoadRenderTexture(Game::ScreenWidth, Game::ScreenHeight);
-    float renderScale{};
+    float renderScale{}; //those two are relevant to drawing and code-cleanliness
     Rectangle renderRec{};
 
     // Main game loop
@@ -31,20 +32,25 @@ int main() {
         // ...
 
         BeginDrawing();
-        BeginTextureMode(canvas);
         // You can draw on the screen between BeginDrawing() and EndDrawing()
-        // ...
-        // ...
-        ClearBackground(WHITE);
-        DrawText("Hello, world!", 10, 10, 30, LIGHTGRAY);
-        DrawTexture(myTexture, 10, 100, WHITE);
+        // For the letterbox we draw on canvas instad
+        BeginTextureMode(canvas);
+        { //Within this block is where we draw our app to the canvas.
+            ClearBackground(WHITE);
+            DrawText("Hello, world!", 10, 10, 30, LIGHTGRAY);
+            DrawTexture(myTexture, 10, 100, WHITE);
+        }
         EndTextureMode();
+        //The following lines put the canvas in the middle of the window and have the negative as black
         ClearBackground(BLACK);
-        renderScale = GetScreenHeight() / (float)canvas.texture.height;
+        renderScale = std::min(GetScreenHeight() / (float) canvas.texture.height, //Calculates how big or small the canvas has to be rendered.
+                               GetScreenWidth() / (float) canvas.texture.width);
         renderRec.width = canvas.texture.width * renderScale;
         renderRec.height = canvas.texture.height * renderScale;
-        renderRec.x = GetScreenWidth()/2 - renderRec.width/2;
-        DrawTexturePro(canvas.texture, Rectangle{0, 0, (float) canvas.texture.width, (float) -canvas.texture.height}, renderRec,
+        renderRec.x = (GetScreenWidth() - renderRec.width) / 2.0f ;
+        renderRec.y = (GetScreenHeight()- renderRec.height) / 2.0f;
+        DrawTexturePro(canvas.texture, Rectangle{0, 0, (float) canvas.texture.width, (float) -canvas.texture.height},
+                       renderRec,
                        {}, 0, WHITE);
         EndDrawing();
     } // Main game loop end
