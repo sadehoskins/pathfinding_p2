@@ -67,6 +67,9 @@ int main() {
                        Rectangle{0, 0, (float) canvas.texture.width, (float) -canvas.texture.height},
                        renderRec,
                        {}, 0, WHITE);
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyDown(KEY_S)) {
+            DrawText(TextFormat("Render scale: %.0f", renderScale), 10, 10, 20, LIGHTGRAY);
+        }
         EndDrawing();
     } // Main game loop end
 
