@@ -21,7 +21,7 @@ int main() {
     // ...
     Texture2D myTexture = LoadTexture("assets/graphics/testimage.png");
     RenderTexture2D canvas = LoadRenderTexture(Game::ScreenWidth, Game::ScreenHeight);
-    float renderScale{}; //those two are relevant to drawing and code-cleanliness
+    float renderScale{}; // this and the line below are relevant to drawing later.
     Rectangle renderRec{};
 
     // Main game loop
@@ -37,6 +37,7 @@ int main() {
             }
         }
         // Updates that are made by frame are coded here
+        // This is where YOUR logic code should go
         // ...
         // ...
 
@@ -44,7 +45,7 @@ int main() {
         // You can draw on the screen between BeginDrawing() and EndDrawing()
         // For the letterbox we draw on canvas instad
         BeginTextureMode(canvas);
-        { //Within this block is where we draw our app to the canvas.
+        { //Within this block is where we draw our app to the canvas and YOUR code goes.
             ClearBackground(WHITE);
             DrawText("Hello, world!", 10, 10, 30, LIGHTGRAY);
             DrawTexture(myTexture, 10, 100, WHITE);
