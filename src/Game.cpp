@@ -1,6 +1,3 @@
-//
-// Created by sadeh on 8/2/2025.
-//
 #include "Game.h"
 #include <cmath>
 #include <iostream>

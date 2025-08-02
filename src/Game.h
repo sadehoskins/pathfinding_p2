@@ -1,7 +1,3 @@
-//
-// Created by sadeh on 8/2/2025.
-//
-
 #ifndef RAYLIBSTARTER_GAME_H
 #define RAYLIBSTARTER_GAME_H
 

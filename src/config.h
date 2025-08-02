@@ -1,6 +1,3 @@
-//
-// Created by sadeh on 8/2/2025.
-//
 
 #ifndef RAYLIBSTARTER_CONFIG_H
 #define RAYLIBSTARTER_CONFIG_H

@@ -1,7 +1,3 @@
-//
-// Created by sadeh on 8/2/2025.
-//
-
 #ifndef RAYLIBSTARTER_MAP_H
 #define RAYLIBSTARTER_MAP_H
 
@@ -110,16 +106,51 @@ void Map<TileContainer>::InitializeMap() {
 
 template<typename TileContainer>
 void Map<TileContainer>::GenerateStaticMap() {
+    InitializeMap();
     PlaceStartAndEnd();
-    GenerateClusteredTerrain();
+
+    // Add some blocked tiles in a pattern
+    for (int y = 1; y < height_ - 1; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            // Skip start and end positions
+            if (Position(x, y) == start_pos_ || Position(x, y) == end_pos_) {
+                continue;
+            }
+
+            // Create some blocked patterns (but not too many)
+            if ((x + y) % 7 == 0 && (x % 3 != 0)) {
+                tiles_[y][x].SetType(Tile::GetRandomBlockedType());
+            }
+        }
+    }
+
     EnsurePathExists();
 }
 
 template<typename TileContainer>
 void Map<TileContainer>::GenerateRandomMap() {
+    InitializeMap();
     PlaceStartAndEnd();
-    GenerateClusteredTerrain();
+    GenerateBlockedTiles();
     EnsurePathExists();
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::GenerateBlockedTiles(float blocked_ratio) {
+    int total_tiles = width_ * height_;
+    int blocked_count = static_cast<int>(total_tiles * blocked_ratio);
+
+    for (int i = 0; i < blocked_count; ++i) {
+        int x = GetRandomValue(0, width_ - 1);
+        int y = GetRandomValue(1, height_ - 2); // Avoid first and last row
+
+        // Don't block start or end positions
+        if (Position(x, y) == start_pos_ || Position(x, y) == end_pos_) {
+            continue;
+        }
+
+        tiles_[y][x].SetType(Tile::GetRandomBlockedType());
+    }
 }
 
 template<typename TileContainer>
@@ -131,12 +162,22 @@ void Map<TileContainer>::GenerateTerrainWithClustering() {
 
 template<typename TileContainer>
 void Map<TileContainer>::PlaceStartAndEnd() {
-    // Start on first row
+    // Clear any existing start/end tiles first
+    for (int y = 0; y < height_; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            if (tiles_[y][x].GetType() == TileType::START ||
+                tiles_[y][x].GetType() == TileType::END) {
+                tiles_[y][x].SetType(TileType::TRAVERSABLE_DIRT);
+            }
+        }
+    }
+
+    // Place start on first row
     int start_x = GetRandomValue(0, width_ - 1);
     start_pos_ = Position(start_x, 0);
     tiles_[0][start_x].SetType(TileType::START);
 
-    // End on last row
+    // Place end on last row
     int end_x = GetRandomValue(0, width_ - 1);
     end_pos_ = Position(end_x, height_ - 1);
     tiles_[height_ - 1][end_x].SetType(TileType::END);
@@ -445,5 +486,4 @@ void Map<TileContainer>::PrintMapInfo() const {
     std::cout << "End: (" << end_pos_.x << ", " << end_pos_.y << ")" << std::endl;
     std::cout << "Valid path exists: " << (HasValidPath() ? "Yes" : "No") << std::endl;
 }
-
 #endif //RAYLIBSTARTER_MAP_H

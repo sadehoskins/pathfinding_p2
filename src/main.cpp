@@ -3,7 +3,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "Game.h"
 // ******************** MAIN FUNCTION ********************
 
 int main() {
