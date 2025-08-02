@@ -1,10 +1,26 @@
-﻿#include <cstdlib>
-#include <algorithm>
+﻿#include "Game.h"
+#include <cstdlib>
+#include <iostream>
+#include <stdexcept>
 
-#include "raylib.h"
+#include "Game.h"
+// ******************** MAIN FUNCTION ********************
 
-#include "config.h"
+int main() {
+    try {
+        // Create and run the game
+        Game game;
+        game.Run();
 
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+/*
 int main() {
     // Raylib initialization
     // Project name, screen size, fullscreen mode etc. can be specified in the config.h.in file
@@ -82,4 +98,4 @@ int main() {
     CloseWindow();
 
     return EXIT_SUCCESS;
-}
+}*/
