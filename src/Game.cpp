@@ -1,12 +1,11 @@
 //
 // Created by sadeh on 8/2/2025.
 //
-
 #include "Game.h"
-#include "config.h"
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 
 // ******************** STATIC CONSTANTS ********************
 
@@ -100,9 +99,9 @@ void Game::HandleInput() {
                 SetGameState(GameState::PAUSED);
             }
             if (IsKeyPressed(KEY_R)) {
-                // Regenerate map
-                game_map_->GenerateStaticMap();
-                std::cout << "Map regenerated!" << std::endl;
+                // Regenerate map with clustering
+                game_map_->GenerateTerrainWithClustering();
+                std::cout << "Map regenerated with terrain clustering!" << std::endl;
             }
             if (IsKeyPressed(KEY_C)) {
                 // Print map to console
@@ -110,6 +109,10 @@ void Game::HandleInput() {
                 game_map_->RenderConsole();
                 game_map_->PrintMapInfo();
                 std::cout << "===================" << std::endl;
+            }
+            if (IsKeyPressed(KEY_T)) {
+                // Toggle texture info
+                std::cout << "Textures loaded: " << (Tile::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
             }
             break;
 
@@ -170,6 +173,9 @@ void Game::InitializeRaylib() {
 }
 
 void Game::InitializeGameSystems() {
+    // Load tile textures
+    Tile::LoadAllTextures();
+
     // Initialize map with default size (15x15)
     game_map_ = std::make_unique<Map<>>(15, 15);
 
@@ -243,8 +249,9 @@ void Game::RenderGame() {
                 DrawText("Legend:", 10, 10, 20, BLACK);
                 DrawText("s = Start", 10, 35, 16, GREEN);
                 DrawText("e = End", 10, 55, 16, RED);
-                DrawText("b = Blocked", 10, 75, 16, DARKGRAY);
-                DrawText("x = Traversable", 10, 95, 16, LIGHTGRAY);
+                DrawText("# = Stone, B = Bushes", 10, 75, 16, DARKGRAY);
+                DrawText("T = Tree, ~ = Water", 10, 95, 16, DARKGRAY);
+                DrawText(". = Dirt, o = Stone, , = Grass", 10, 115, 16, DARKGRAY);
             }
             break;
 
@@ -268,11 +275,14 @@ void Game::RenderUI() {
 
     // Show controls in playing state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: R=Regenerate | C=Console | ESC=Pause", 10, GetScreenHeight() - 30, 16, DARKGRAY);
+        DrawText("Controls: R=Regenerate | C=Console | T=Texture Info | ESC=Pause", 10, GetScreenHeight() - 30, 16, DARKGRAY);
     }
 }
 
 void Game::CleanupResources() {
+    // Unload tile textures
+    Tile::UnloadAllTextures();
+
     // Unload render texture
     UnloadRenderTexture(canvas_);
 

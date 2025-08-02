@@ -26,6 +26,7 @@ public:
     // Map Generation
     void GenerateStaticMap();
     void GenerateRandomMap();
+    void GenerateTerrainWithClustering();
 
     // Tile Access
     Tile& GetTile(int x, int y);
@@ -62,6 +63,12 @@ private:
     void InitializeMap();
     void PlaceStartAndEnd();
     void GenerateBlockedTiles(float blocked_ratio = 0.3f);
+    void GenerateClusteredTerrain();
+    void PlaceWaterClusters();
+    void PlaceVegetationClusters();
+    void FillTraversableAreas();
+    int CountBlockedNeighbors(int x, int y) const;
+    int CountWaterNeighbors(int x, int y) const;
     bool ValidatePathExists() const;
     bool DepthFirstSearch(Position current, Position target,
                           std::vector<std::vector<bool>>& visited) const;
@@ -96,7 +103,7 @@ void Map<TileContainer>::InitializeMap() {
     for (int y = 0; y < height_; ++y) {
         tiles_[y].resize(width_);
         for (int x = 0; x < width_; ++x) {
-            tiles_[y][x] = Tile(TileType::TRAVERSABLE, x, y);
+            tiles_[y][x] = Tile(TileType::TRAVERSABLE_DIRT, x, y);
         }
     }
 }
@@ -104,29 +111,21 @@ void Map<TileContainer>::InitializeMap() {
 template<typename TileContainer>
 void Map<TileContainer>::GenerateStaticMap() {
     PlaceStartAndEnd();
-
-    // Add some blocked tiles in a pattern
-    for (int y = 1; y < height_ - 1; ++y) {
-        for (int x = 0; x < width_; ++x) {
-            // Skip start and end positions
-            if (Position(x, y) == start_pos_ || Position(x, y) == end_pos_) {
-                continue;
-            }
-
-            // Create some blocked patterns (but not too many)
-            if ((x + y) % 7 == 0 && (x % 3 != 0)) {
-                tiles_[y][x].SetType(TileType::BLOCKED);
-            }
-        }
-    }
-
+    GenerateClusteredTerrain();
     EnsurePathExists();
 }
 
 template<typename TileContainer>
 void Map<TileContainer>::GenerateRandomMap() {
     PlaceStartAndEnd();
-    GenerateBlockedTiles();
+    GenerateClusteredTerrain();
+    EnsurePathExists();
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::GenerateTerrainWithClustering() {
+    PlaceStartAndEnd();
+    GenerateClusteredTerrain();
     EnsurePathExists();
 }
 
@@ -144,21 +143,192 @@ void Map<TileContainer>::PlaceStartAndEnd() {
 }
 
 template<typename TileContainer>
-void Map<TileContainer>::GenerateBlockedTiles(float blocked_ratio) {
-    int total_tiles = width_ * height_;
-    int blocked_count = static_cast<int>(total_tiles * blocked_ratio);
+void Map<TileContainer>::GenerateClusteredTerrain() {
+    // Step 1: Place water clusters
+    PlaceWaterClusters();
 
-    for (int i = 0; i < blocked_count; ++i) {
-        int x = GetRandomValue(0, width_ - 1);
-        int y = GetRandomValue(1, height_ - 2); // Avoid first and last row
+    // Step 2: Place vegetation clusters (trees/bushes)
+    PlaceVegetationClusters();
 
-        // Don't block start or end positions
-        if (Position(x, y) == start_pos_ || Position(x, y) == end_pos_) {
+    // Step 3: Fill remaining traversable areas with varied tiles
+    FillTraversableAreas();
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::PlaceWaterClusters() {
+    int water_clusters = GetRandomValue(2, 4);
+
+    for (int cluster = 0; cluster < water_clusters; ++cluster) {
+        // Pick random starting point (avoid first and last rows)
+        int start_x = GetRandomValue(1, width_ - 2);
+        int start_y = GetRandomValue(2, height_ - 3);
+
+        // Skip if start/end positions
+        if (Position(start_x, start_y) == start_pos_ || Position(start_x, start_y) == end_pos_) {
             continue;
         }
 
-        tiles_[y][x].SetType(TileType::BLOCKED);
+        // Create small water cluster (2-4 tiles)
+        int cluster_size = GetRandomValue(2, 4);
+        std::vector<Position> cluster_positions;
+        cluster_positions.push_back(Position(start_x, start_y));
+
+        for (int i = 1; i < cluster_size; ++i) {
+            // Try to place water near existing water
+            bool placed = false;
+            for (int attempts = 0; attempts < 10 && !placed; ++attempts) {
+                Position base = cluster_positions[GetRandomValue(0, cluster_positions.size() - 1)];
+                int new_x = base.x + GetRandomValue(-1, 1);
+                int new_y = base.y + GetRandomValue(-1, 1);
+
+                if (IsValidPosition(new_x, new_y) &&
+                    Position(new_x, new_y) != start_pos_ &&
+                    Position(new_x, new_y) != end_pos_) {
+
+                    cluster_positions.push_back(Position(new_x, new_y));
+                    placed = true;
+                }
+            }
+        }
+
+        // Place the water tiles
+        for (const Position& pos : cluster_positions) {
+            tiles_[pos.y][pos.x].SetType(TileType::BLOCKED_WATER);
+        }
     }
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::PlaceVegetationClusters() {
+    int vegetation_clusters = GetRandomValue(3, 6);
+
+    for (int cluster = 0; cluster < vegetation_clusters; ++cluster) {
+        int start_x = GetRandomValue(0, width_ - 1);
+        int start_y = GetRandomValue(1, height_ - 2);
+
+        // Skip if start/end positions or already water
+        if (Position(start_x, start_y) == start_pos_ ||
+            Position(start_x, start_y) == end_pos_ ||
+            tiles_[start_y][start_x].GetType() == TileType::BLOCKED_WATER) {
+            continue;
+        }
+
+        // Choose vegetation type for this cluster
+        TileType vegetation_type = (GetRandomValue(0, 1) == 0) ?
+                                   TileType::BLOCKED_TREE : TileType::BLOCKED_BUSHES;
+
+        // Create small vegetation cluster
+        int cluster_size = GetRandomValue(1, 3);
+        tiles_[start_y][start_x].SetType(vegetation_type);
+
+        // Add nearby vegetation
+        for (int i = 1; i < cluster_size; ++i) {
+            int new_x = start_x + GetRandomValue(-1, 1);
+            int new_y = start_y + GetRandomValue(-1, 1);
+
+            if (IsValidPosition(new_x, new_y) &&
+                Position(new_x, new_y) != start_pos_ &&
+                Position(new_x, new_y) != end_pos_ &&
+                !Tile::IsBlockedType(tiles_[new_y][new_x].GetType())) {
+
+                tiles_[new_y][new_x].SetType(vegetation_type);
+            }
+        }
+    }
+
+    // Scatter some stone blocks
+    int stone_count = GetRandomValue(width_ * height_ / 20, width_ * height_ / 15);
+    for (int i = 0; i < stone_count; ++i) {
+        int x = GetRandomValue(0, width_ - 1);
+        int y = GetRandomValue(1, height_ - 2);
+
+        if (Position(x, y) != start_pos_ &&
+            Position(x, y) != end_pos_ &&
+            !Tile::IsBlockedType(tiles_[y][x].GetType())) {
+
+            tiles_[y][x].SetType(TileType::BLOCKED_STONE);
+        }
+    }
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::FillTraversableAreas() {
+    for (int y = 0; y < height_; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            // Skip if already blocked or start/end
+            if (Tile::IsBlockedType(tiles_[y][x].GetType()) ||
+                tiles_[y][x].GetType() == TileType::START ||
+                tiles_[y][x].GetType() == TileType::END) {
+                continue;
+            }
+
+            // Count blocked neighbors to determine terrain preference
+            int blocked_neighbors = CountBlockedNeighbors(x, y);
+
+            if (blocked_neighbors == 0) {
+                // Open area - prefer grass
+                if (GetRandomValue(0, 100) < 60) {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_GRASS);
+                } else if (GetRandomValue(0, 100) < 30) {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_STONE);
+                } else {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_DIRT);
+                }
+            } else if (blocked_neighbors <= 2) {
+                // Some neighbors - mixed terrain
+                if (GetRandomValue(0, 100) < 40) {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_DIRT);
+                } else if (GetRandomValue(0, 100) < 35) {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_STONE);
+                } else {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_GRASS);
+                }
+            } else {
+                // Many blocked neighbors - prefer dirt paths
+                if (GetRandomValue(0, 100) < 70) {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_DIRT);
+                } else {
+                    tiles_[y][x].SetType(TileType::TRAVERSABLE_STONE);
+                }
+            }
+        }
+    }
+}
+
+template<typename TileContainer>
+int Map<TileContainer>::CountBlockedNeighbors(int x, int y) const {
+    int count = 0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (dx == 0 && dy == 0) continue; // Skip center tile
+
+            int nx = x + dx;
+            int ny = y + dy;
+
+            if (IsValidPosition(nx, ny) && Tile::IsBlockedType(tiles_[ny][nx].GetType())) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+template<typename TileContainer>
+int Map<TileContainer>::CountWaterNeighbors(int x, int y) const {
+    int count = 0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (dx == 0 && dy == 0) continue;
+
+            int nx = x + dx;
+            int ny = y + dy;
+
+            if (IsValidPosition(nx, ny) && tiles_[ny][nx].GetType() == TileType::BLOCKED_WATER) {
+                count++;
+            }
+        }
+    }
+    return count;
 }
 
 template<typename TileContainer>
@@ -166,8 +336,8 @@ void Map<TileContainer>::EnsurePathExists() {
     // Simple path creation - make sure there's at least one path down the middle
     int middle_x = width_ / 2;
     for (int y = 0; y < height_; ++y) {
-        if (tiles_[y][middle_x].GetType() == TileType::BLOCKED) {
-            tiles_[y][middle_x].SetType(TileType::TRAVERSABLE);
+        if (Tile::IsBlockedType(tiles_[y][middle_x].GetType())) {
+            tiles_[y][middle_x].SetType(TileType::TRAVERSABLE_DIRT);
         }
     }
 }

@@ -7,6 +7,7 @@
 
 #include "raylib.h"
 #include "Map.h"
+#include "Tile.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -72,5 +73,6 @@ private:
     void RenderUI();
     void CleanupResources();
 };
+
 
 #endif //RAYLIBSTARTER_GAME_H
