@@ -14,7 +14,31 @@ add_executable(${PROJECT_NAME} main.cpp
         Map.h
         Game.cpp
         Game.h
-        config.h)
+        config.h
+        items/base-classes/ItemBase.cpp
+        items/base-classes/ItemBase.h
+        items/ItemManager.cpp
+        items/ItemManager.h
+        items/base-classes/WeaponItem.cpp
+        items/base-classes/WeaponItem.h
+        items/base-classes/CurrencyItem.cpp
+        items/base-classes/CurrencyItem.h
+        items/base-classes/ConsumableItem.cpp
+        items/base-classes/ConsumableItem.h
+        items/base-classes/CollectibleItem.cpp
+        items/base-classes/CollectibleItem.h
+        items/weapons/WeaponSword.cpp
+        items/weapons/WeaponSword.h
+        items/weapons/WeaponStaff.cpp
+        items/weapons/WeaponStaff.h
+        items/currency/CurrencyKittyCoin.cpp
+        items/currency/CurrencyKittyCoin.h
+        items/consumables/ConsumablesHealthPotion.cpp
+        items/consumables/ConsumablesHealthPotion.h
+        items/consumables/ConsumablesBomb.cpp
+        items/consumables/ConsumablesBomb.h
+        items/collectibles/GemstoneBlue.cpp
+        items/collectibles/GemstoneBlue.h)
 
 # Add config.h.in file
 configure_file(config.h.in config.h)

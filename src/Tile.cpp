@@ -17,19 +17,19 @@ void Tile::LoadAllTextures() {
     std::cout << "Loading tile textures..." << std::endl;
 
     // Load textures for each tile type
-    textures_[TileType::START] = LoadTexture("assets/graphics/start.png");
-    textures_[TileType::END] = LoadTexture("assets/graphics/end.png");
+    textures_[TileType::START] = LoadTexture("assets/graphics/tiles/start.png");
+    textures_[TileType::END] = LoadTexture("assets/graphics/tiles/end.png");
 
     // Blocked variants
-    textures_[TileType::BLOCKED_STONE] = LoadTexture("assets/graphics/blocked/stone.png");
-    textures_[TileType::BLOCKED_BUSHES] = LoadTexture("assets/graphics/blocked/bushes.png");
-    textures_[TileType::BLOCKED_TREE] = LoadTexture("assets/graphics/blocked/tree.png");
-    textures_[TileType::BLOCKED_WATER] = LoadTexture("assets/graphics/blocked/water.png");
+    textures_[TileType::BLOCKED_STONE] = LoadTexture("assets/graphics/tiles/blocked/stone.png");
+    textures_[TileType::BLOCKED_BUSHES] = LoadTexture("assets/graphics/tiles/blocked/bushes.png");
+    textures_[TileType::BLOCKED_TREE] = LoadTexture("assets/graphics/tiles/blocked/tree.png");
+    textures_[TileType::BLOCKED_WATER] = LoadTexture("assets/graphics/tiles/blocked/water.png");
 
     // Traversable variants
-    textures_[TileType::TRAVERSABLE_DIRT] = LoadTexture("assets/graphics/traversable/dirt_path.png");
-    textures_[TileType::TRAVERSABLE_STONE] = LoadTexture("assets/graphics/traversable/stone_tile.png");
-    textures_[TileType::TRAVERSABLE_GRASS] = LoadTexture("assets/graphics/traversable/grass.png");
+    textures_[TileType::TRAVERSABLE_DIRT] = LoadTexture("assets/graphics/tiles/traversable/dirt_path.png");
+    textures_[TileType::TRAVERSABLE_STONE] = LoadTexture("assets/graphics/tiles/traversable/stone_tile.png");
+    textures_[TileType::TRAVERSABLE_GRASS] = LoadTexture("assets/graphics/tiles/traversable/grass.png");
 
     // Check if textures loaded successfully
     for (const auto& pair : textures_) {
