@@ -1,7 +1,6 @@
-
 #include "ConsumablesBomb.h"
 
-// ******************** CONSUMABLE BOMB IMPLEMENTATION ********************
+// ******************** CONSUMABLES BOMB IMPLEMENTATION ********************
 
 ConsumablesBomb::ConsumablesBomb()
         : ConsumableItem("Explosive Bomb", "A dangerous bomb that deals area damage.",

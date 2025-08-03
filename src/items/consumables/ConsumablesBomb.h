@@ -3,11 +3,10 @@
 
 #include "../base-classes/ConsumableItem.h"
 
-// ******************** CONSUMABLE BOMB CLASS ********************
+// ******************** CONSUMABLES BOMB CLASS ********************
 
 class ConsumablesBomb : public ConsumableItem {
 public:
     ConsumablesBomb();
 };
-
 #endif //RAYLIBSTARTER_CONSUMABLEBOMB_H

@@ -20,7 +20,11 @@ enum class TileType {
     // Traversable variants (all return true for IsTraversable())
     TRAVERSABLE_DIRT,
     TRAVERSABLE_STONE,
-    TRAVERSABLE_GRASS
+    TRAVERSABLE_GRASS,
+
+    // **NEW** Treasure chest variants (traversable)
+    TREASURE_CHEST_CLOSED,
+    TREASURE_CHEST_OPENED
 };
 
 // ******************** POSITION STRUCT ********************
@@ -53,6 +57,7 @@ public:
     // Utility functions for tile type logic
     static bool IsBlockedType(TileType type);
     static bool IsTraversableType(TileType type);
+    static bool IsTreasureChestType(TileType type);
     static TileType GetRandomBlockedType();
     static TileType GetRandomTraversableType();
 
@@ -70,11 +75,18 @@ public:
     char GetCharRepresentation() const;
     Color GetColor() const;
     bool IsTraversable() const;
+    bool IsTreasureChest() const;
+    bool IsClosedTreasureChest() const;
+    bool IsOpenTreasureChest() const;
 
     // Setters
     void SetType(TileType type);
     void SetPosition(const Position& pos);
     void SetPosition(int x, int y);
+
+    // **NEW** Treasure chest operations
+    void OpenTreasureChest();
+    void CloseTreasureChest();
 
     // Rendering
     void Render(int screen_x, int screen_y, int tile_size) const;

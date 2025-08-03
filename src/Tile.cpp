@@ -16,7 +16,7 @@ void Tile::LoadAllTextures() {
 
     std::cout << "Loading tile textures..." << std::endl;
 
-    // Load textures for each tile type
+    // Load textures for each tile type with updated paths
     textures_[TileType::START] = LoadTexture("assets/graphics/tiles/start.png");
     textures_[TileType::END] = LoadTexture("assets/graphics/tiles/end.png");
 
@@ -30,6 +30,10 @@ void Tile::LoadAllTextures() {
     textures_[TileType::TRAVERSABLE_DIRT] = LoadTexture("assets/graphics/tiles/traversable/dirt_path.png");
     textures_[TileType::TRAVERSABLE_STONE] = LoadTexture("assets/graphics/tiles/traversable/stone_tile.png");
     textures_[TileType::TRAVERSABLE_GRASS] = LoadTexture("assets/graphics/tiles/traversable/grass.png");
+
+    // **NEW** Treasure chest variants
+    textures_[TileType::TREASURE_CHEST_CLOSED] = LoadTexture("assets/graphics/items/treasure_chest_closed.png");
+    textures_[TileType::TREASURE_CHEST_OPENED] = LoadTexture("assets/graphics/items/treasure_chest_opened.png");
 
     // Check if textures loaded successfully
     for (const auto& pair : textures_) {
@@ -72,7 +76,12 @@ bool Tile::IsBlockedType(TileType type) {
 }
 
 bool Tile::IsTraversableType(TileType type) {
-    return type >= TileType::TRAVERSABLE_DIRT && type <= TileType::TRAVERSABLE_GRASS;
+    return (type >= TileType::TRAVERSABLE_DIRT && type <= TileType::TRAVERSABLE_GRASS) ||
+           IsTreasureChestType(type);
+}
+
+bool Tile::IsTreasureChestType(TileType type) {
+    return type == TileType::TREASURE_CHEST_CLOSED || type == TileType::TREASURE_CHEST_OPENED;
 }
 
 TileType Tile::GetRandomBlockedType() {
@@ -136,6 +145,18 @@ bool Tile::IsTraversable() const {
     return IsTraversableType(type_) || type_ == TileType::START || type_ == TileType::END;
 }
 
+bool Tile::IsTreasureChest() const {
+    return IsTreasureChestType(type_);
+}
+
+bool Tile::IsClosedTreasureChest() const {
+    return type_ == TileType::TREASURE_CHEST_CLOSED;
+}
+
+bool Tile::IsOpenTreasureChest() const {
+    return type_ == TileType::TREASURE_CHEST_OPENED;
+}
+
 // ******************** SETTERS ********************
 
 void Tile::SetType(TileType type) {
@@ -148,6 +169,20 @@ void Tile::SetPosition(const Position& pos) {
 
 void Tile::SetPosition(int x, int y) {
     position_ = Position(x, y);
+}
+
+// ******************** TREASURE CHEST OPERATIONS ********************
+
+void Tile::OpenTreasureChest() {
+    if (type_ == TileType::TREASURE_CHEST_CLOSED) {
+        type_ = TileType::TREASURE_CHEST_OPENED;
+    }
+}
+
+void Tile::CloseTreasureChest() {
+    if (type_ == TileType::TREASURE_CHEST_OPENED) {
+        type_ = TileType::TREASURE_CHEST_CLOSED;
+    }
 }
 
 // ******************** RENDERING ********************
@@ -199,6 +234,8 @@ std::string Tile::GetTypeName() const {
         case TileType::TRAVERSABLE_DIRT: return "Dirt Path";
         case TileType::TRAVERSABLE_STONE: return "Stone Tile";
         case TileType::TRAVERSABLE_GRASS: return "Grass";
+        case TileType::TREASURE_CHEST_CLOSED: return "Treasure Chest (Closed)";
+        case TileType::TREASURE_CHEST_OPENED: return "Treasure Chest (Opened)";
         default: return "Unknown";
     }
 }
@@ -216,6 +253,8 @@ char Tile::GetCharForType(TileType type) const {
         case TileType::TRAVERSABLE_DIRT: return '.';
         case TileType::TRAVERSABLE_STONE: return 'o';
         case TileType::TRAVERSABLE_GRASS: return ',';
+        case TileType::TREASURE_CHEST_CLOSED: return 't';
+        case TileType::TREASURE_CHEST_OPENED: return 'O';
         default: return '?';
     }
 }
@@ -231,21 +270,25 @@ Color Tile::GetColorForType(TileType type) const {
         case TileType::TRAVERSABLE_DIRT: return BEIGE;
         case TileType::TRAVERSABLE_STONE: return LIGHTGRAY;
         case TileType::TRAVERSABLE_GRASS: return LIME;
+        case TileType::TREASURE_CHEST_CLOSED: return GOLD;
+        case TileType::TREASURE_CHEST_OPENED: return ORANGE;
         default: return MAGENTA;
     }
 }
 
 std::string Tile::GetTexturePathForType(TileType type) const {
     switch (type) {
-        case TileType::START: return "assets/graphics/start.png";
-        case TileType::END: return "assets/graphics/end.png";
-        case TileType::BLOCKED_STONE: return "assets/graphics/blocked/stone.png";
-        case TileType::BLOCKED_BUSHES: return "assets/graphics/blocked/bushes.png";
-        case TileType::BLOCKED_TREE: return "assets/graphics/blocked/tree.png";
-        case TileType::BLOCKED_WATER: return "assets/graphics/blocked/water.png";
-        case TileType::TRAVERSABLE_DIRT: return "assets/graphics/traversable/dirt_path.png";
-        case TileType::TRAVERSABLE_STONE: return "assets/graphics/traversable/stone_tile.png";
-        case TileType::TRAVERSABLE_GRASS: return "assets/graphics/traversable/grass.png";
+        case TileType::START: return "assets/graphics/tiles/start.png";
+        case TileType::END: return "assets/graphics/tiles/end.png";
+        case TileType::BLOCKED_STONE: return "assets/graphics/tiles/blocked/stone.png";
+        case TileType::BLOCKED_BUSHES: return "assets/graphics/tiles/blocked/bushes.png";
+        case TileType::BLOCKED_TREE: return "assets/graphics/tiles/blocked/tree.png";
+        case TileType::BLOCKED_WATER: return "assets/graphics/tiles/blocked/water.png";
+        case TileType::TRAVERSABLE_DIRT: return "assets/graphics/tiles/traversable/dirt_path.png";
+        case TileType::TRAVERSABLE_STONE: return "assets/graphics/tiles/traversable/stone_tile.png";
+        case TileType::TRAVERSABLE_GRASS: return "assets/graphics/tiles/traversable/grass.png";
+        case TileType::TREASURE_CHEST_CLOSED: return "assets/graphics/items/treasure_chest_closed.png";
+        case TileType::TREASURE_CHEST_OPENED: return "assets/graphics/items/treasure_chest_opened.png";
         default: return "";
     }
 }
