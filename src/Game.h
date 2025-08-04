@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "Map.h"
 #include "Tile.h"
+#include "items/ItemManager.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -45,6 +46,9 @@ public:
     // Utility
     bool ShouldClose() const;
 
+    // **NEW** Treasure chest interaction methods
+    void DemoTreasureChestInteraction();
+
 private:
     // Game state
     GameState current_state_;
@@ -69,6 +73,5 @@ private:
     void RenderUI();
     void CleanupResources();
 };
-
 
 #endif //RAYLIBSTARTER_GAME_H

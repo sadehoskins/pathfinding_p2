@@ -6,7 +6,7 @@
 
 // ******************** STATIC CONSTANTS ********************
 
-const char* Game::kProjectName = "2D Map Generator";
+const char* Game::kProjectName = "2D Map Generator - Task 1c";
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
@@ -98,7 +98,7 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_R)) {
                 // Regenerate map with clustering
                 game_map_->GenerateTerrainWithClustering();
-                std::cout << "Map regenerated with terrain clustering!" << std::endl;
+                std::cout << "Map regenerated with terrain clustering and items!" << std::endl;
             }
             if (IsKeyPressed(KEY_C)) {
                 // Print map to console
@@ -110,6 +110,23 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_T)) {
                 // Toggle texture info
                 std::cout << "Textures loaded: " << (Tile::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
+            }
+            if (IsKeyPressed(KEY_I)) {
+                // Show item information - DEBUG VERSION
+                std::cout << "\n=== DEBUG ITEM INFO ===" << std::endl;
+                std::cout << "Total items in manager: " << game_map_->GetItemManager().GetTotalItemCount() << std::endl;
+                std::cout << "Treasure chest positions: " << ItemManager::GetTreasureChestPositions().size() << std::endl;
+
+                if (game_map_->GetItemManager().GetTotalItemCount() > 0) {
+                    game_map_->GetItemManager().PrintItemsInfo();
+                } else {
+                    std::cout << "NO ITEMS GENERATED! Item generation failed." << std::endl;
+                }
+                std::cout << "=======================" << std::endl;
+            }
+            // **NEW** Treasure chest interaction (spacebar to open nearby chests)
+            if (IsKeyPressed(KEY_SPACE)) {
+                DemoTreasureChestInteraction();
             }
             break;
 
@@ -180,6 +197,7 @@ void Game::InitializeGameSystems() {
     std::cout << "\n=== INITIAL MAP ===" << std::endl;
     game_map_->RenderConsole();
     game_map_->PrintMapInfo();
+    game_map_->GetItemManager().PrintItemsInfo();
     std::cout << "===================" << std::endl;
 }
 
@@ -226,7 +244,8 @@ void Game::RenderGame() {
 
     switch (current_state_) {
         case GameState::MENU:
-            DrawText("2D MAP GENERATOR", 200, 200, 40, DARKGRAY);
+            DrawText("2D MAP GENERATOR - TASK 1C", 150, 180, 40, DARKGRAY);
+            DrawText("Features: Treasure Chests & Items!", 200, 230, 20, GRAY);
             DrawText("Press ENTER to start", 250, 300, 20, GRAY);
             DrawText("Press ALT+ENTER for fullscreen", 220, 350, 16, LIGHTGRAY);
             break;
@@ -249,6 +268,14 @@ void Game::RenderGame() {
                 DrawText("# = Stone, B = Bushes", 10, 75, 16, DARKGRAY);
                 DrawText("T = Tree, ~ = Water", 10, 95, 16, DARKGRAY);
                 DrawText(". = Dirt, o = Stone, , = Grass", 10, 115, 16, DARKGRAY);
+                DrawText("t = Treasure Chest (Closed)", 10, 135, 16, GOLD);
+                DrawText("O = Treasure Chest (Opened)", 10, 155, 16, ORANGE);
+
+                // **NEW** Item system info
+                DrawText(TextFormat("Items: %d", game_map_->GetItemManager().GetTotalItemCount()),
+                         10, 185, 16, PURPLE);
+                DrawText(TextFormat("Chests: %d", (int)ItemManager::GetTreasureChestPositions().size()),
+                         10, 205, 16, GOLD);
             }
             break;
 
@@ -272,7 +299,8 @@ void Game::RenderUI() {
 
     // Show controls in playing state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: R=Regenerate | C=Console | T=Texture Info | ESC=Pause", 10, GetScreenHeight() - 30, 16, DARKGRAY);
+        DrawText("Controls: R=Regenerate | C=Console | I=Items | SPACE=Demo Chest | T=Texture | ESC=Pause",
+                 10, GetScreenHeight() - 30, 14, DARKGRAY);
     }
 }
 
@@ -285,4 +313,46 @@ void Game::CleanupResources() {
 
     // Reset game map
     game_map_.reset();
+}
+
+// ******************** NEW METHODS FOR TASK 1C ********************
+
+void Game::DemoTreasureChestInteraction() {
+    if (!game_map_) return;
+
+    // Find a random closed treasure chest for demonstration
+    auto chest_positions = ItemManager::GetTreasureChestPositions();
+
+    for (const Position& chest_pos : chest_positions) {
+        if (game_map_->HasTreasureChestAt(chest_pos) &&
+            game_map_->GetTile(chest_pos).IsClosedTreasureChest()) {
+
+            std::cout << "\n=== OPENING TREASURE CHEST ===" << std::endl;
+            std::cout << "Opening chest at position (" << chest_pos.x << ", " << chest_pos.y << ")" << std::endl;
+
+            // Get the item from the chest
+            auto chest_item = game_map_->GetItemManager().TakeItemAtPosition(chest_pos, true);
+            if (chest_item) {
+                std::cout << "Found item: " << chest_item->GetName() << std::endl;
+                std::cout << "Description: " << chest_item->GetDescription() << std::endl;
+                std::cout << "Value: " << chest_item->GetValue() << " kitty coins" << std::endl;
+                std::cout << "Weight: " << chest_item->GetWeight() << " kg" << std::endl;
+                std::cout << "Rarity: " << chest_item->GetRarityName() << std::endl;
+                std::cout << "Type: " << chest_item->GetTypeDescription() << std::endl;
+
+                // Demonstrate item usage
+                std::cout << "\nTrying to use item..." << std::endl;
+                chest_item->Use();
+            }
+
+            // Open the chest visually
+            game_map_->OpenTreasureChestAt(chest_pos);
+            std::cout << "Treasure chest opened!" << std::endl;
+            std::cout << "=============================" << std::endl;
+
+            return; // Only open one chest per demo
+        }
+    }
+
+    std::cout << "No closed treasure chests found to demonstrate!" << std::endl;
 }

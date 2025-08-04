@@ -2,6 +2,7 @@
 #define RAYLIBSTARTER_MAP_H
 
 #include "Tile.h"
+#include "items/ItemManager.h"
 #include "raylib.h"
 #include <vector>
 #include <memory>
@@ -30,6 +31,13 @@ public:
     Tile& GetTile(const Position& pos);
     const Tile& GetTile(const Position& pos) const;
 
+    // **NEW** Item System Access
+    ItemManager& GetItemManager() { return item_manager_; }
+    const ItemManager& GetItemManager() const { return item_manager_; }
+    bool HasTreasureChestAt(const Position& pos) const;
+    bool HasItemsAt(const Position& pos) const;
+    void OpenTreasureChestAt(const Position& pos);
+
     // Map Properties
     int GetWidth() const { return width_; }
     int GetHeight() const { return height_; }
@@ -55,6 +63,9 @@ private:
     Position start_pos_;
     Position end_pos_;
 
+    // **NEW** Item management
+    ItemManager item_manager_;
+
     // Helper methods
     void InitializeMap();
     void PlaceStartAndEnd();
@@ -63,6 +74,11 @@ private:
     void PlaceWaterClusters();
     void PlaceVegetationClusters();
     void FillTraversableAreas();
+
+    // **NEW** Item and treasure chest placement
+    void PlaceItemsAndTreasureChests();
+    void PlaceTreasureChests();
+
     int CountBlockedNeighbors(int x, int y) const;
     int CountWaterNeighbors(int x, int y) const;
     bool ValidatePathExists() const;
@@ -125,6 +141,7 @@ void Map<TileContainer>::GenerateStaticMap() {
     }
 
     EnsurePathExists();
+    PlaceItemsAndTreasureChests();  // ** ENSURE THIS IS CALLED **
 }
 
 template<typename TileContainer>
@@ -133,6 +150,15 @@ void Map<TileContainer>::GenerateRandomMap() {
     PlaceStartAndEnd();
     GenerateBlockedTiles();
     EnsurePathExists();
+    PlaceItemsAndTreasureChests();  // ** ENSURE THIS IS CALLED **
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::GenerateTerrainWithClustering() {
+    PlaceStartAndEnd();
+    GenerateClusteredTerrain();
+    EnsurePathExists();
+    PlaceItemsAndTreasureChests();  // ** CRITICAL: THIS WAS MISSING **
 }
 
 template<typename TileContainer>
@@ -151,13 +177,6 @@ void Map<TileContainer>::GenerateBlockedTiles(float blocked_ratio) {
 
         tiles_[y][x].SetType(Tile::GetRandomBlockedType());
     }
-}
-
-template<typename TileContainer>
-void Map<TileContainer>::GenerateTerrainWithClustering() {
-    PlaceStartAndEnd();
-    GenerateClusteredTerrain();
-    EnsurePathExists();
 }
 
 template<typename TileContainer>
@@ -336,6 +355,50 @@ void Map<TileContainer>::FillTraversableAreas() {
     }
 }
 
+// **NEW** Item and treasure chest placement methods
+template<typename TileContainer>
+void Map<TileContainer>::PlaceItemsAndTreasureChests() {
+    // Generate items using ItemManager
+    item_manager_.GenerateItemsForMap(width_, height_, 5);
+
+    // Place treasure chest tiles where items are marked as chest items
+    PlaceTreasureChests();
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::PlaceTreasureChests() {
+    // Get treasure chest positions from ItemManager
+    auto chest_positions = ItemManager::GetTreasureChestPositions();
+
+    for (const Position& pos : chest_positions) {
+        if (IsValidPosition(pos) &&
+            tiles_[pos.y][pos.x].IsTraversable() &&
+            !tiles_[pos.y][pos.x].IsTreasureChest()) {
+
+            tiles_[pos.y][pos.x].SetType(TileType::TREASURE_CHEST_CLOSED);
+        }
+    }
+}
+
+// **NEW** Item system access methods
+template<typename TileContainer>
+bool Map<TileContainer>::HasTreasureChestAt(const Position& pos) const {
+    if (!IsValidPosition(pos)) return false;
+    return tiles_[pos.y][pos.x].IsTreasureChest();
+}
+
+template<typename TileContainer>
+bool Map<TileContainer>::HasItemsAt(const Position& pos) const {
+    return item_manager_.GetItemCountAtPosition(pos) > 0;
+}
+
+template<typename TileContainer>
+void Map<TileContainer>::OpenTreasureChestAt(const Position& pos) {
+    if (IsValidPosition(pos) && tiles_[pos.y][pos.x].IsClosedTreasureChest()) {
+        tiles_[pos.y][pos.x].OpenTreasureChest();
+    }
+}
+
 template<typename TileContainer>
 int Map<TileContainer>::CountBlockedNeighbors(int x, int y) const {
     int count = 0;
@@ -485,5 +548,8 @@ void Map<TileContainer>::PrintMapInfo() const {
     std::cout << "Start: (" << start_pos_.x << ", " << start_pos_.y << ")" << std::endl;
     std::cout << "End: (" << end_pos_.x << ", " << end_pos_.y << ")" << std::endl;
     std::cout << "Valid path exists: " << (HasValidPath() ? "Yes" : "No") << std::endl;
+    std::cout << "Total items: " << item_manager_.GetTotalItemCount() << std::endl;
+    std::cout << "Treasure chests: " << ItemManager::GetTreasureChestPositions().size() << std::endl;
 }
+
 #endif //RAYLIBSTARTER_MAP_H
