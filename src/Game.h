@@ -5,6 +5,7 @@
 #include "Map.h"
 #include "Tile.h"
 #include "items/ItemManager.h"
+#include "inventory/InventorySystem.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -13,6 +14,7 @@ enum class GameState {
     MENU,
     PLAYING,
     PAUSED,
+    INVENTORY,
     EXIT
 };
 
@@ -57,6 +59,9 @@ private:
     // Map system
     std::unique_ptr<Map<>> game_map_;
 
+    // Inventory system
+    std::unique_ptr<InventorySystem> inventory_system_;
+
     // Rendering properties
     RenderTexture2D canvas_;
     float render_scale_;
@@ -72,6 +77,12 @@ private:
     void RenderGame();
     void RenderUI();
     void CleanupResources();
+
+    // Inventory integration methods
+    void HandleInventoryToggle();
+    void HandleTreasureChestInteraction();
+
+    void DemoInventoryIntegration();
 };
 
 #endif //RAYLIBSTARTER_GAME_H

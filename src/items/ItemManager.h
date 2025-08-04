@@ -60,8 +60,8 @@ public:
     static std::unique_ptr<ItemBase> CreateRandomItemByWeight();
     static std::vector<Position> GetTreasureChestPositions() { return treasure_chest_positions_; }
 
-private:
     std::vector<ItemWithPosition> items_;
+private:
     static std::vector<Position> treasure_chest_positions_;
 
     // Random generation helpers

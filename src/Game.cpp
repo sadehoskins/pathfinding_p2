@@ -14,6 +14,7 @@ Game::Game()
         : current_state_(GameState::MENU)
         , should_close_(false)
         , game_map_(nullptr)
+        , inventory_system_(nullptr)
         , render_scale_(1.0f)
         , tile_size_(30) {
     // Constructor initialization
@@ -83,6 +84,18 @@ void Game::HandleInput() {
     // Handle fullscreen toggle
     HandleFullscreenToggle();
 
+    // **NEW** Handle inventory system input first (it manages its own state)
+    if (inventory_system_) {
+        inventory_system_->HandleInput();
+
+        // Check if inventory state changed
+        if (inventory_system_->IsInventoryOpen() && current_state_ != GameState::INVENTORY) {
+            SetGameState(GameState::INVENTORY);
+        } else if (!inventory_system_->IsInventoryOpen() && current_state_ == GameState::INVENTORY) {
+            SetGameState(GameState::PLAYING);
+        }
+    }
+
     // Handle game state specific input
     switch (current_state_) {
         case GameState::MENU:
@@ -124,9 +137,15 @@ void Game::HandleInput() {
                 }
                 std::cout << "=======================" << std::endl;
             }
-            // **NEW** Treasure chest interaction (spacebar to open nearby chests)
+            // Treasure chest interaction (spacebar to open nearby chests) uses inventory system
             if (IsKeyPressed(KEY_SPACE)) {
-                DemoTreasureChestInteraction();
+                HandleTreasureChestInteraction();
+            }
+            // Inventory status shortcut
+            if (IsKeyPressed(KEY_P)) {
+                if (inventory_system_) {
+                    inventory_system_->PrintInventoryStatus();
+                }
             }
             break;
 
@@ -158,6 +177,9 @@ void Game::SetGameState(GameState new_state) {
     switch (new_state) {
         case GameState::PLAYING:
             std::cout << "Entering PLAYING state" << std::endl;
+            break;
+        case GameState::INVENTORY:
+            std::cout << "Entering INVENTORY state" << std::endl;
             break;
         case GameState::PAUSED:
             std::cout << "Game PAUSED" << std::endl;
@@ -193,6 +215,14 @@ void Game::InitializeGameSystems() {
     // Initialize map with default size (15x15)
     game_map_ = std::make_unique<Map<>>(15, 15);
 
+    // Initialize inventory system
+    inventory_system_ = std::make_unique<InventorySystem>();
+
+    // Some test items for inventory demonstration
+    inventory_system_->AddItemToInventory(std::make_unique<WeaponSword>());
+    inventory_system_->AddItemToInventory(std::make_unique<ArmorKittyBoots>());
+    inventory_system_->AddItemToInventory(std::make_unique<AccessoryLuckyPaw>());
+
     // Print initial map info
     std::cout << "\n=== INITIAL MAP ===" << std::endl;
     game_map_->RenderConsole();
@@ -205,7 +235,12 @@ void Game::UpdateGameLogic() {
     // Update game systems based on current state
     switch (current_state_) {
         case GameState::PLAYING:
-            // Game logic updates would go here
+        case GameState::INVENTORY:
+            // **NEW** Update inventory system
+            if (inventory_system_) {
+                inventory_system_->Update();
+            }
+            // Other game logic updates would go here
             break;
         default:
             break;
@@ -276,6 +311,40 @@ void Game::RenderGame() {
                          10, 185, 16, PURPLE);
                 DrawText(TextFormat("Chests: %d", (int)ItemManager::GetTreasureChestPositions().size()),
                          10, 205, 16, GOLD);
+
+                // **NEW** Inventory info
+                if (inventory_system_) {
+                    int strength_bonus = inventory_system_->GetTotalStrengthBonus();
+                    if (strength_bonus > 0) {
+                        DrawText(TextFormat("Equipment Strength: +%d", strength_bonus),
+                                 10, 225, 16, GREEN);
+                    }
+                }
+            }
+
+            // **NEW** Render inventory system (minimal UI when closed)
+            if (inventory_system_) {
+                inventory_system_->Render(kScreenWidth, kScreenHeight);
+            }
+            break;
+
+        case GameState::INVENTORY:
+            // Render game background (dimmed)
+            if (game_map_) {
+                int map_width = game_map_->GetWidth() * tile_size_;
+                int map_height = game_map_->GetHeight() * tile_size_;
+                int offset_x = (kScreenWidth - map_width) / 2;
+                int offset_y = (kScreenHeight - map_height) / 2;
+
+                game_map_->Render(offset_x, offset_y, tile_size_);
+
+                // Dim the background
+                DrawRectangle(0, 0, kScreenWidth, kScreenHeight, ColorAlpha(BLACK, 0.3f));
+            }
+
+            // **NEW** Render full inventory system
+            if (inventory_system_) {
+                inventory_system_->Render(kScreenWidth, kScreenHeight);
             }
             break;
 
@@ -297,12 +366,16 @@ void Game::RenderUI() {
         DrawText(TextFormat("Render scale: %.0f", render_scale_), 10, 10, 20, LIGHTGRAY);
     }
 
-    // Show controls in playing state
+    // Show controls based on current state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: R=Regenerate | C=Console | I=Items | SPACE=Demo Chest | T=Texture | ESC=Pause",
-                 10, GetScreenHeight() - 30, 14, DARKGRAY);
+        DrawText("Controls: R=Regenerate | C=Console | SPACE=Open Chest | I=Inventory | P=Print Inv | T=Texture | ESC=Pause",
+                 10, GetScreenHeight() - 30, 12, DARKGRAY);
+    } else if (current_state_ == GameState::INVENTORY) {
+        DrawText("INVENTORY MODE - See inventory window for controls",
+                 10, GetScreenHeight() - 30, 14, GOLD);
     }
 }
+
 
 void Game::CleanupResources() {
     // Unload tile textures
@@ -311,6 +384,9 @@ void Game::CleanupResources() {
     // Unload render texture
     UnloadRenderTexture(canvas_);
 
+    // **NEW** Reset inventory system
+    inventory_system_.reset();
+
     // Reset game map
     game_map_.reset();
 }
@@ -318,7 +394,13 @@ void Game::CleanupResources() {
 // ******************** NEW METHODS FOR TASK 1C ********************
 
 void Game::DemoTreasureChestInteraction() {
-    if (!game_map_) return;
+    // This method is now replaced by HandleTreasureChestInteraction()
+    // Keep for compatibility, but redirect to new method
+    HandleTreasureChestInteraction();
+}
+
+void Game::HandleTreasureChestInteraction() {
+    if (!game_map_ || !inventory_system_) return;
 
     // Find a random closed treasure chest for demonstration
     auto chest_positions = ItemManager::GetTreasureChestPositions();
@@ -330,29 +412,41 @@ void Game::DemoTreasureChestInteraction() {
             std::cout << "\n=== OPENING TREASURE CHEST ===" << std::endl;
             std::cout << "Opening chest at position (" << chest_pos.x << ", " << chest_pos.y << ")" << std::endl;
 
-            // Get the item from the chest
-            auto chest_item = game_map_->GetItemManager().TakeItemAtPosition(chest_pos, true);
-            if (chest_item) {
-                std::cout << "Found item: " << chest_item->GetName() << std::endl;
-                std::cout << "Description: " << chest_item->GetDescription() << std::endl;
-                std::cout << "Value: " << chest_item->GetValue() << " kitty coins" << std::endl;
-                std::cout << "Weight: " << chest_item->GetWeight() << " kg" << std::endl;
-                std::cout << "Rarity: " << chest_item->GetRarityName() << std::endl;
-                std::cout << "Type: " << chest_item->GetTypeDescription() << std::endl;
+            // **NEW** Use inventory system to handle the item
+            bool success = inventory_system_->OpenTreasureChest(chest_pos, game_map_->GetItemManager());
 
-                // Demonstrate item usage
-                std::cout << "\nTrying to use item..." << std::endl;
-                chest_item->Use();
+            if (success) {
+                // Open the chest visually
+                game_map_->OpenTreasureChestAt(chest_pos);
+                std::cout << "Treasure chest opened and item added to inventory!" << std::endl;
+            } else {
+                std::cout << "Could not add item to inventory (full or no item)" << std::endl;
             }
 
-            // Open the chest visually
-            game_map_->OpenTreasureChestAt(chest_pos);
-            std::cout << "Treasure chest opened!" << std::endl;
-            std::cout << "=============================" << std::endl;
-
+            std::cout << "===============================" << std::endl;
             return; // Only open one chest per demo
         }
     }
 
-    std::cout << "No closed treasure chests found to demonstrate!" << std::endl;
+    std::cout << "No closed treasure chests found to open!" << std::endl;
+}
+
+
+// Optional/Delete later: Add this method for testing
+void Game::DemoInventoryIntegration() {
+    if (!inventory_system_) return;
+
+    std::cout << "\n=== INVENTORY INTEGRATION DEMO ===" << std::endl;
+
+    // Add some demo items
+    inventory_system_->AddItemToInventory(std::make_unique<WeaponStaff>());
+    inventory_system_->AddItemToInventory(std::make_unique<ArmorElderWings>());
+    inventory_system_->AddItemToInventory(std::make_unique<AccessoryClawNecklace>());
+
+    // Show current inventory status
+    inventory_system_->PrintInventoryStatus();
+
+    std::cout << "Total equipment strength bonus: +" << inventory_system_->GetTotalStrengthBonus() << std::endl;
+    std::cout << "Press 'I' in-game to open inventory!" << std::endl;
+    std::cout << "===================================" << std::endl;
 }
