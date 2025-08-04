@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "items/ItemTextureManager.h"
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -212,6 +213,9 @@ void Game::InitializeGameSystems() {
     // Load tile textures
     Tile::LoadAllTextures();
 
+    // **NEW** Load item textures
+    ItemTextureManager::LoadAllItemTextures();
+
     // Initialize map with default size (15x15)
     game_map_ = std::make_unique<Map<>>(15, 15);
 
@@ -381,10 +385,13 @@ void Game::CleanupResources() {
     // Unload tile textures
     Tile::UnloadAllTextures();
 
+    // Unload item textures
+    ItemTextureManager::UnloadAllItemTextures();
+
     // Unload render texture
     UnloadRenderTexture(canvas_);
 
-    // **NEW** Reset inventory system
+    // Reset inventory system
     inventory_system_.reset();
 
     // Reset game map

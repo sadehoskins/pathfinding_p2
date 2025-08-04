@@ -1,5 +1,6 @@
 
 #include "InventorySystem.h"
+#include "../items/ItemTextureManager.h"
 #include <iostream>
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
@@ -225,8 +226,8 @@ int InventorySystem::GetTotalStrengthBonus() const {
 
 void InventorySystem::RenderInventoryWindow(int screen_width, int screen_height) {
     // Calculate window dimensions
-    int window_width = 700;
-    int window_height = 550;
+    int window_width = 750;
+    int window_height = 580;
     int window_x = (screen_width - window_width) / 2;
     int window_y = (screen_height - window_height) / 2;
 
@@ -247,19 +248,30 @@ void InventorySystem::RenderInventoryWindow(int screen_width, int screen_height)
     RenderEquipmentSlots(window_x + 15, window_y + 85);
 
     // Render inventory slots
-    RenderInventorySlots(window_x + 15, window_y + 220);
+    RenderInventorySlots(window_x + 15, window_y + 230);
 
     // Controls help
-    int help_y = window_y + window_height - 120;
-    DrawText("Controls:", window_x + 15, help_y, 16, LIGHTGRAY);
-    DrawText("Arrow Keys: Navigate | E: Toggle Equip Mode", window_x + 15, help_y + 25, 14, GRAY);
-    DrawText("Enter: Examine Item | D: Drop Item | I/ESC: Close", window_x + 15, help_y + 45, 14, GRAY);
+    int help_y = window_y + window_height - 140;
+
+    // **IMPROVED** Better contrast for control text
+    DrawRectangle(window_x + 10, help_y - 5, window_width - 20, 130, ColorAlpha(BLACK, 0.8f));
+    DrawRectangleLines(window_x + 10, help_y - 5, window_width - 20, 130, GRAY);
+
+    DrawText("CONTROLS:", window_x + 20, help_y + 5, 16, WHITE);
+
+    // **IMPROVED** Better organized and more readable control text
+    DrawText("Navigate: Arrow Keys  |  Examine: ENTER  |  Drop: D",
+             window_x + 20, help_y + 30, 14, LIGHTGRAY);
+    DrawText("Toggle Mode: E  |  Close: I or ESC",
+             window_x + 20, help_y + 50, 14, LIGHTGRAY);
 
     if (is_equip_mode_) {
-        DrawText("EQUIP: 1=Weapon | 2=Armor | 3=Accessory",
-                 window_x + 15, help_y + 65, 14, YELLOW);
-        DrawText("UNEQUIP: U+Q=Weapon | U+W=Armor | U+E=Accessory",
-                 window_x + 15, help_y + 85, 14, YELLOW);
+        // **IMPROVED** Better contrast for equip mode text
+        DrawText("EQUIP TO SLOTS:", window_x + 20, help_y + 75, 14, YELLOW);
+        DrawText("1 = Weapon  |  2 = Armor  |  3 = Accessory",
+                 window_x + 20, help_y + 95, 13, ColorAlpha(YELLOW, 0.9f));
+        DrawText("UNEQUIP: U+Q = Weapon  |  U+W = Armor  |  U+E = Accessory",
+                 window_x + 20, help_y + 115, 13, ColorAlpha(YELLOW, 0.9f));
     }
 }
 
@@ -267,15 +279,15 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
     DrawText("EQUIPMENT:", start_x, start_y, 18, WHITE);
 
     int slot_size = 80;
-    int slot_spacing = 110;
+    int slot_spacing = 120; // **INCREASED** spacing to prevent overlap
 
     // Equipment slot names
     const char* slot_names[] = {"WEAPON", "ARMOR", "ACCESSORY"};
     EquipmentSlotType slot_types[] = {EquipmentSlotType::WEAPON, EquipmentSlotType::ARMOR, EquipmentSlotType::ACCESSORY};
 
     for (int i = 0; i < 3; i++) {
-        int slot_x = start_x + (i * (slot_size + slot_spacing));
-        int slot_y = start_y + 30;  // More space from label
+        int slot_x = start_x + (i * slot_spacing);
+        int slot_y = start_y + 30;
 
         // Draw slot background
         Color slot_color = player_inventory_->IsEquipmentSlotOccupied(slot_types[i]) ?
@@ -283,34 +295,53 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
         DrawRectangle(slot_x, slot_y, slot_size, slot_size, slot_color);
         DrawRectangleLines(slot_x, slot_y, slot_size, slot_size, WHITE);
 
-        // Draw slot label
-        int label_width = MeasureText(slot_names[i], 14);
-        DrawText(slot_names[i], slot_x + (slot_size - label_width) / 2, slot_y - 22, 14, WHITE);
+        // **IMPROVED** Draw slot label with better positioning
+        int label_width = MeasureText(slot_names[i], 12); // **SMALLER** font to prevent overlap
+        DrawText(slot_names[i], slot_x + (slot_size - label_width) / 2, slot_y - 20, 12, WHITE);
 
-
-        // Draw equipped item name (truncated)
-        // **IMPROVED** Draw equipped item info
+        // Draw equipped item
         const ItemBase* equipped = player_inventory_->GetEquippedItem(slot_types[i]);
         if (equipped) {
-            // Item name with better wrapping
-            std::string item_name = equipped->GetName();
+            // **NEW** Try to render item texture first
+            if (ItemTextureManager::AreTexturesLoaded()) {
+                Texture2D item_texture = ItemTextureManager::GetItemTexture(equipped->GetName());
+                if (item_texture.id != 0) {
+                    // Draw texture scaled to fit slot (with small margin)
+                    int texture_size = slot_size - 10;
+                    int texture_x = slot_x + 5;
+                    int texture_y = slot_y + 5;
 
-            // **IMPROVED** Better text wrapping for item names
-            if (item_name.length() > 12) {
-                // Split long names into two lines
-                std::string line1 = item_name.substr(0, 12);
-                std::string line2 = item_name.substr(12);
-                if (line2.length() > 8) {
-                    line2 = line2.substr(0, 6) + "..";
+                    Rectangle source = {0, 0, (float)item_texture.width, (float)item_texture.height};
+                    Rectangle dest = {(float)texture_x, (float)texture_y, (float)texture_size, (float)texture_size};
+                    DrawTexturePro(item_texture, source, dest, {0, 0}, 0.0f, WHITE);
+
+                    // Draw rarity border around texture
+                    Color rarity_color = WHITE;
+                    switch (equipped->GetRarity()) {
+                        case ItemRarity::COMMON: rarity_color = LIGHTGRAY; break;
+                        case ItemRarity::UNCOMMON: rarity_color = GREEN; break;
+                        case ItemRarity::RARE: rarity_color = BLUE; break;
+                        case ItemRarity::LEGENDARY: rarity_color = GOLD; break;
+                    }
+                    DrawRectangleLines(texture_x - 1, texture_y - 1, texture_size + 2, texture_size + 2, rarity_color);
+                } else {
+                    // Fallback to text if texture not found
+                    std::string item_name = equipped->GetName();
+                    if (item_name.length() > 10) {
+                        item_name = item_name.substr(0, 8) + "..";
+                    }
+                    DrawText(item_name.c_str(), slot_x + 4, slot_y + 8, 10, WHITE);
                 }
-
-                DrawText(line1.c_str(), slot_x + 4, slot_y + 8, 12, WHITE);
-                DrawText(line2.c_str(), slot_x + 4, slot_y + 24, 12, WHITE);
             } else {
-                DrawText(item_name.c_str(), slot_x + 4, slot_y + 8, 12, WHITE);
+                // Fallback to text if textures not loaded
+                std::string item_name = equipped->GetName();
+                if (item_name.length() > 10) {
+                    item_name = item_name.substr(0, 8) + "..";
+                }
+                DrawText(item_name.c_str(), slot_x + 4, slot_y + 8, 10, WHITE);
             }
 
-            // **IMPROVED** Show strength bonus with better positioning
+            // Show strength bonus (always show regardless of texture)
             int str_bonus = 0;
             if (const WeaponItem* weapon = dynamic_cast<const WeaponItem*>(equipped)) {
                 str_bonus = weapon->GetStrengthBonus();
@@ -321,21 +352,12 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
             }
 
             if (str_bonus > 0) {
-                DrawText(TextFormat("+%d STR", str_bonus),
-                         slot_x + 4, slot_y + slot_size - 18, 12, GREEN);
+                // **IMPROVED** Better positioning for strength bonus
+                DrawRectangle(slot_x + 2, slot_y + slot_size - 16, 40, 14, ColorAlpha(BLACK, 0.7f));
+                DrawText(TextFormat("+%d STR", str_bonus), slot_x + 4, slot_y + slot_size - 15, 10, GREEN);
             }
-
-            // **NEW** Show rarity indicator
-            Color rarity_color = WHITE;
-            switch (equipped->GetRarity()) {
-                case ItemRarity::COMMON: rarity_color = LIGHTGRAY; break;
-                case ItemRarity::UNCOMMON: rarity_color = GREEN; break;
-                case ItemRarity::RARE: rarity_color = BLUE; break;
-                case ItemRarity::LEGENDARY: rarity_color = GOLD; break;
-            }
-            DrawRectangle(slot_x + slot_size - 12, slot_y + 4, 8, 8, rarity_color);
         } else {
-            // **IMPROVED** Show empty slot indicator
+            // Show empty slot indicator
             DrawText("EMPTY", slot_x + (slot_size - MeasureText("EMPTY", 12)) / 2,
                      slot_y + (slot_size - 12) / 2, 12, GRAY);
         }
@@ -375,17 +397,40 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
         DrawRectangleLines(slot_x, slot_y, slot_size, slot_size, WHITE);
 
         // Draw slot number
-        DrawText(TextFormat("%d", i), slot_x + 4, slot_y + 4, 14, WHITE);
+        DrawText(TextFormat("%d", i), slot_x + 4, slot_y + 4, 12, WHITE);
 
-        // Draw item info if present
+        // Draw item if present
         if (item) {
-            std::string item_name = item->GetName();
-            if (item_name.length() > 10) {
-                item_name = item_name.substr(0, 8) + "..";
-            }
-            DrawText(item_name.c_str(), slot_x + 4, slot_y + 22, 11, WHITE);
+            // **NEW** Try to render item texture first
+            if (ItemTextureManager::AreTexturesLoaded()) {
+                Texture2D item_texture = ItemTextureManager::GetItemTexture(item->GetName());
+                if (item_texture.id != 0) {
+                    // Draw texture scaled to fit slot (with margin for slot number)
+                    int texture_size = slot_size - 20;
+                    int texture_x = slot_x + 10;
+                    int texture_y = slot_y + 18;
 
-            // Draw rarity indicator
+                    Rectangle source = {0, 0, (float)item_texture.width, (float)item_texture.height};
+                    Rectangle dest = {(float)texture_x, (float)texture_y, (float)texture_size, (float)texture_size};
+                    DrawTexturePro(item_texture, source, dest, {0, 0}, 0.0f, WHITE);
+                } else {
+                    // Fallback to text if texture not found
+                    std::string item_name = item->GetName();
+                    if (item_name.length() > 8) {
+                        item_name = item_name.substr(0, 6) + "..";
+                    }
+                    DrawText(item_name.c_str(), slot_x + 4, slot_y + 20, 9, WHITE);
+                }
+            } else {
+                // Fallback to text if textures not loaded
+                std::string item_name = item->GetName();
+                if (item_name.length() > 8) {
+                    item_name = item_name.substr(0, 6) + "..";
+                }
+                DrawText(item_name.c_str(), slot_x + 4, slot_y + 20, 9, WHITE);
+            }
+
+            // Draw rarity indicator (always show)
             Color rarity_color = WHITE;
             switch (item->GetRarity()) {
                 case ItemRarity::COMMON: rarity_color = LIGHTGRAY; break;
@@ -395,7 +440,7 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
             }
             DrawRectangle(slot_x + slot_size - 12, slot_y + 4, 10, 10, rarity_color);
 
-            // **NEW** Show item type indicator
+            // Show item type indicator
             char type_char = '?';
             Color type_color = WHITE;
             if (dynamic_cast<const WeaponItem*>(item)) {
@@ -405,20 +450,23 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
                 type_char = 'A';
                 type_color = BLUE;
             } else if (dynamic_cast<const AccessoryItem*>(item)) {
-                type_char = 'C'; // aCcessory
+                type_char = 'C';
                 type_color = PURPLE;
             } else if (dynamic_cast<const ConsumableItem*>(item)) {
-                type_char = 'U'; // consUmable
+                type_char = 'U';
                 type_color = ORANGE;
             } else if (dynamic_cast<const CurrencyItem*>(item)) {
                 type_char = '$';
                 type_color = YELLOW;
             }
 
-            DrawText(TextFormat("%c", type_char), slot_x + 4, slot_y + slot_size - 18, 12, type_color);
+            // **IMPROVED** Better positioning for type indicator
+            DrawRectangle(slot_x + 2, slot_y + slot_size - 16, 12, 12, ColorAlpha(BLACK, 0.7f));
+            DrawText(TextFormat("%c", type_char), slot_x + 4, slot_y + slot_size - 14, 10, type_color);
         }
     }
-    // **NEW** Show inventory usage stats
+
+    // Show inventory usage stats
     int used_slots = player_inventory_->GetUsedSlots();
     int max_slots = player_inventory_->GetMaxSlots();
     DrawText(TextFormat("SLOTS: %d/%d", used_slots, max_slots),
