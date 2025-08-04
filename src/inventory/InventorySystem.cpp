@@ -1,6 +1,6 @@
 
 #include "InventorySystem.h"
-#include "../items/ItemTextureManager.h"
+
 #include <iostream>
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
@@ -302,9 +302,9 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
         // Draw equipped item
         const ItemBase* equipped = player_inventory_->GetEquippedItem(slot_types[i]);
         if (equipped) {
-            // **NEW** Try to render item texture first
-            if (ItemTextureManager::AreTexturesLoaded()) {
-                Texture2D item_texture = ItemTextureManager::GetItemTexture(equipped->GetName());
+            // **UPDATED** Use TextureManager directly
+            if (TextureManager::AreTexturesLoaded()) {
+                Texture2D item_texture = TextureManager::GetItemTexture(equipped->GetName());
                 if (item_texture.id != 0) {
                     // Draw texture scaled to fit slot (with small margin)
                     int texture_size = slot_size - 10;
@@ -402,8 +402,8 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
         // Draw item if present
         if (item) {
             // **NEW** Try to render item texture first
-            if (ItemTextureManager::AreTexturesLoaded()) {
-                Texture2D item_texture = ItemTextureManager::GetItemTexture(item->GetName());
+            if (TextureManager::AreTexturesLoaded()) {
+                Texture2D item_texture = TextureManager::GetItemTexture(item->GetName());
                 if (item_texture.id != 0) {
                     // Draw texture scaled to fit slot (with margin for slot number)
                     int texture_size = slot_size - 20;
@@ -601,3 +601,99 @@ void InventorySystem::RenderMinimalUI(int screen_width, int screen_height) {
     }
 }
 
+// ******************** WEIGHT MANAGEMENT METHODS ********************
+
+float InventorySystem::GetCurrentWeight() const {
+    if (!player_inventory_) {
+        return 0.0f;
+    }
+
+    float total_weight = 0.0f;
+
+    // Calculate weight from regular inventory slots
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        const ItemBase* item = player_inventory_->GetItem(i);
+        if (item) {
+            total_weight += item->GetWeight();
+        }
+    }
+
+    // Add weight from equipped items
+    const ItemBase* weapon = player_inventory_->GetEquippedItem(EquipmentSlotType::WEAPON);
+    if (weapon) total_weight += weapon->GetWeight();
+
+    const ItemBase* armor = player_inventory_->GetEquippedItem(EquipmentSlotType::ARMOR);
+    if (armor) total_weight += armor->GetWeight();
+
+    const ItemBase* accessory = player_inventory_->GetEquippedItem(EquipmentSlotType::ACCESSORY);
+    if (accessory) total_weight += accessory->GetWeight();
+
+    return total_weight;
+}
+
+float InventorySystem::GetMaxCarryWeight(int player_strength) const {
+    // Each point of strength allows 2kg of carry weight
+    return player_strength * 2.0f;
+}
+
+bool InventorySystem::IsOverweight(int player_strength) const {
+    return GetCurrentWeight() > GetMaxCarryWeight(player_strength);
+}
+
+// ******************** EQUIPMENT MANAGEMENT METHODS ********************
+
+bool InventorySystem::EquipItemInSlot(int inventory_slot, EquipmentSlotType equipment_slot) {
+    if (!player_inventory_) {
+        return false;
+    }
+
+    bool success = player_inventory_->EquipItem(inventory_slot, equipment_slot);
+    if (success) {
+        SetStatusMessage("Item equipped successfully!", 2.0f);
+    } else {
+        SetStatusMessage("Failed to equip item", 2.0f);
+    }
+
+    return success;
+}
+
+bool InventorySystem::UnequipEquipmentSlot(EquipmentSlotType slot_type) {
+    if (!player_inventory_) {
+        return false;
+    }
+
+    bool success = player_inventory_->UnequipItem(slot_type);
+    if (success) {
+        SetStatusMessage("Item unequipped successfully!", 2.0f);
+    } else {
+        SetStatusMessage("No item equipped in that slot", 2.0f);
+    }
+
+    return success;
+}
+
+// ******************** ITEM ACCESS METHODS ********************
+
+const ItemBase* InventorySystem::GetItemInSlot(int slot) const {
+    if (!player_inventory_) {
+        return nullptr;
+    }
+
+    return player_inventory_->GetItem(slot);
+}
+
+int InventorySystem::GetMaxInventorySlots() const {
+    if (!player_inventory_) {
+        return 0;
+    }
+
+    return player_inventory_->GetMaxSlots();
+}
+
+int InventorySystem::GetUsedInventorySlots() const {
+    if (!player_inventory_) {
+        return 0;
+    }
+
+    return player_inventory_->GetUsedSlots();
+}

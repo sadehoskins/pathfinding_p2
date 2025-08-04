@@ -4,6 +4,7 @@
 #include "Tile.h"
 #include "items/ItemManager.h"
 #include "raylib.h"
+#include "TextureManager.h"
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -521,11 +522,102 @@ bool Map<TileContainer>::DepthFirstSearch(Position current, Position target,
 
 template<typename TileContainer>
 void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const {
+    // Render all tiles first
     for (int y = 0; y < height_; ++y) {
         for (int x = 0; x < width_; ++x) {
             int screen_x = offset_x + (x * tile_size);
             int screen_y = offset_y + (y * tile_size);
             tiles_[y][x].Render(screen_x, screen_y, tile_size);
+        }
+    }
+
+    // **NEW** Render sparkle effects for hidden items
+    if (TextureManager::AreTexturesLoaded()) {
+        Texture2D sparkle_texture = TextureManager::GetUITexture("sparkle");
+
+        for (const auto& item_with_pos : item_manager_.GetAllItems()) {
+            if (!item_with_pos.is_in_treasure_chest) { // Only render hidden items
+                int item_screen_x = offset_x + (item_with_pos.position.x * tile_size);
+                int item_screen_y = offset_y + (item_with_pos.position.y * tile_size);
+
+                if (sparkle_texture.id != 0) {
+                    // **SPARKLE TEXTURE** - Draw sparkle with animated effect
+
+                    // Create pulsing/glowing effect based on time
+                    float time = GetTime();
+                    float pulse = (sin(time * 3.0f) + 1.0f) * 0.5f; // 0.0 to 1.0
+                    float alpha = 0.6f + (pulse * 0.4f); // 0.6 to 1.0
+
+                    // Color based on rarity
+                    Color sparkle_color = WHITE;
+                    switch (item_with_pos.item->GetRarity()) {
+                        case ItemRarity::COMMON:
+                            sparkle_color = ColorAlpha(LIGHTGRAY, alpha);
+                            break;
+                        case ItemRarity::UNCOMMON:
+                            sparkle_color = ColorAlpha(GREEN, alpha);
+                            break;
+                        case ItemRarity::RARE:
+                            sparkle_color = ColorAlpha(SKYBLUE, alpha);
+                            break;
+                        case ItemRarity::LEGENDARY:
+                            sparkle_color = ColorAlpha(GOLD, alpha);
+                            break;
+                    }
+
+                    // Draw sparkle texture centered on tile
+                    int sparkle_size = tile_size / 2; // Half the tile size
+                    int sparkle_x = item_screen_x + (tile_size - sparkle_size) / 2;
+                    int sparkle_y = item_screen_y + (tile_size - sparkle_size) / 2;
+
+                    Rectangle source = {0, 0, (float)sparkle_texture.width, (float)sparkle_texture.height};
+                    Rectangle dest = {(float)sparkle_x, (float)sparkle_y, (float)sparkle_size, (float)sparkle_size};
+
+                    // Add slight rotation for more dynamic effect
+                    float rotation = time * 30.0f; // Slow rotation
+                    Vector2 origin = {sparkle_size / 2.0f, sparkle_size / 2.0f};
+
+                    DrawTexturePro(sparkle_texture, source, dest, origin, rotation, sparkle_color);
+
+                } else {
+                    // **FALLBACK** - Simple colored circle if no sparkle texture
+                    Color item_color = WHITE;
+                    switch (item_with_pos.item->GetRarity()) {
+                        case ItemRarity::COMMON: item_color = LIGHTGRAY; break;
+                        case ItemRarity::UNCOMMON: item_color = GREEN; break;
+                        case ItemRarity::RARE: item_color = BLUE; break;
+                        case ItemRarity::LEGENDARY: item_color = GOLD; break;
+                    }
+
+                    // Draw pulsing circle
+                    float time = GetTime();
+                    float pulse = (sin(time * 4.0f) + 1.0f) * 0.5f;
+                    float radius = 3.0f + (pulse * 2.0f);
+
+                    DrawCircle(item_screen_x + tile_size / 2,
+                               item_screen_y + tile_size / 2,
+                               radius, ColorAlpha(item_color, 0.8f));
+                }
+            }
+        }
+    } else {
+        // **FALLBACK** - Simple indicators if textures not loaded
+        for (const auto& item_with_pos : item_manager_.GetAllItems()) {
+            if (!item_with_pos.is_in_treasure_chest) {
+                int item_screen_x = offset_x + (item_with_pos.position.x * tile_size);
+                int item_screen_y = offset_y + (item_with_pos.position.y * tile_size);
+
+                Color item_color = WHITE;
+                switch (item_with_pos.item->GetRarity()) {
+                    case ItemRarity::COMMON: item_color = LIGHTGRAY; break;
+                    case ItemRarity::UNCOMMON: item_color = GREEN; break;
+                    case ItemRarity::RARE: item_color = BLUE; break;
+                    case ItemRarity::LEGENDARY: item_color = GOLD; break;
+                }
+
+                DrawCircle(item_screen_x + tile_size - 8, item_screen_y + 8, 4, item_color);
+                DrawText("*", item_screen_x + tile_size - 6, item_screen_y + 4, 8, BLACK);
+            }
         }
     }
 }

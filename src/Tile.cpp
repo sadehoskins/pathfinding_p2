@@ -1,73 +1,12 @@
 #include "Tile.h"
+#include "TextureManager.h"
 #include <iostream>
 
 // ******************** STATIC MEMBER DEFINITIONS ********************
 
-std::unordered_map<TileType, Texture2D> Tile::textures_;
-bool Tile::textures_loaded_ = false;
 
-// ******************** STATIC TEXTURE MANAGEMENT ********************
 
-void Tile::LoadAllTextures() {
-    if (textures_loaded_) {
-        std::cout << "Textures already loaded, skipping..." << std::endl;
-        return;
-    }
 
-    std::cout << "Loading tile textures..." << std::endl;
-
-    // Load textures for each tile type with updated paths
-    textures_[TileType::START] = LoadTexture("assets/graphics/tiles/start.png");
-    textures_[TileType::END] = LoadTexture("assets/graphics/tiles/end.png");
-
-    // Blocked variants
-    textures_[TileType::BLOCKED_STONE] = LoadTexture("assets/graphics/tiles/blocked/stone.png");
-    textures_[TileType::BLOCKED_BUSHES] = LoadTexture("assets/graphics/tiles/blocked/bushes.png");
-    textures_[TileType::BLOCKED_TREE] = LoadTexture("assets/graphics/tiles/blocked/tree.png");
-    textures_[TileType::BLOCKED_WATER] = LoadTexture("assets/graphics/tiles/blocked/water.png");
-
-    // Traversable variants
-    textures_[TileType::TRAVERSABLE_DIRT] = LoadTexture("assets/graphics/tiles/traversable/dirt_path.png");
-    textures_[TileType::TRAVERSABLE_STONE] = LoadTexture("assets/graphics/tiles/traversable/stone_tile.png");
-    textures_[TileType::TRAVERSABLE_GRASS] = LoadTexture("assets/graphics/tiles/traversable/grass.png");
-
-    // **NEW** Treasure chest variants
-    textures_[TileType::TREASURE_CHEST_CLOSED] = LoadTexture("assets/graphics/items/treasure_chest_closed.png");
-    textures_[TileType::TREASURE_CHEST_OPENED] = LoadTexture("assets/graphics/items/treasure_chest_opened.png");
-
-    // Check if textures loaded successfully
-    for (const auto& pair : textures_) {
-        if (pair.second.id == 0) {
-            std::cout << "Warning: Failed to load texture for tile type "
-                      << static_cast<int>(pair.first) << std::endl;
-        }
-    }
-
-    textures_loaded_ = true;
-    std::cout << "Tile textures loaded successfully!" << std::endl;
-}
-
-void Tile::UnloadAllTextures() {
-    if (!textures_loaded_) {
-        return;
-    }
-
-    std::cout << "Unloading tile textures..." << std::endl;
-
-    for (auto& pair : textures_) {
-        if (pair.second.id != 0) {
-            UnloadTexture(pair.second);
-        }
-    }
-
-    textures_.clear();
-    textures_loaded_ = false;
-    std::cout << "Tile textures unloaded successfully!" << std::endl;
-}
-
-bool Tile::AreTexturesLoaded() {
-    return textures_loaded_;
-}
 
 // ******************** UTILITY FUNCTIONS ********************
 
@@ -188,7 +127,7 @@ void Tile::CloseTreasureChest() {
 // ******************** RENDERING ********************
 
 void Tile::Render(int screen_x, int screen_y, int tile_size) const {
-    if (textures_loaded_) {
+    if (TextureManager::AreTexturesLoaded()) {  // **UPDATED** Use TextureManager
         // Use texture if available and loaded
         Texture2D texture = GetTextureForType(type_);
         if (texture.id != 0) {
@@ -276,7 +215,7 @@ Color Tile::GetColorForType(TileType type) const {
     }
 }
 
-std::string Tile::GetTexturePathForType(TileType type) const {
+/*std::string Tile::GetTexturePathForType(TileType type) const {
     switch (type) {
         case TileType::START: return "assets/graphics/tiles/start.png";
         case TileType::END: return "assets/graphics/tiles/end.png";
@@ -291,13 +230,21 @@ std::string Tile::GetTexturePathForType(TileType type) const {
         case TileType::TREASURE_CHEST_OPENED: return "assets/graphics/items/treasure_chest_opened.png";
         default: return "";
     }
-}
+}*/
 
 Texture2D Tile::GetTextureForType(TileType type) const {
-    auto it = textures_.find(type);
-    if (it != textures_.end()) {
-        return it->second;
+    switch (type) {
+        case TileType::START: return TextureManager::GetTileTexture("start");
+        case TileType::END: return TextureManager::GetTileTexture("end");
+        case TileType::BLOCKED_STONE: return TextureManager::GetTileTexture("stone");
+        case TileType::BLOCKED_BUSHES: return TextureManager::GetTileTexture("bushes");
+        case TileType::BLOCKED_TREE: return TextureManager::GetTileTexture("tree");
+        case TileType::BLOCKED_WATER: return TextureManager::GetTileTexture("water");
+        case TileType::TRAVERSABLE_DIRT: return TextureManager::GetTileTexture("dirt_path");
+        case TileType::TRAVERSABLE_STONE: return TextureManager::GetTileTexture("stone_tile");
+        case TileType::TRAVERSABLE_GRASS: return TextureManager::GetTileTexture("grass");
+        case TileType::TREASURE_CHEST_CLOSED: return TextureManager::GetTileTexture("treasure_chest_closed");
+        case TileType::TREASURE_CHEST_OPENED: return TextureManager::GetTileTexture("treasure_chest_opened");
+        default: return Texture2D{0};
     }
-    // Return empty texture if not found
-    return Texture2D{0};
 }

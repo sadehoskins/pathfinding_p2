@@ -3,7 +3,6 @@
 
 #include "raylib.h"
 #include <string>
-#include <unordered_map>
 
 // ******************** TILE TYPES ********************
 
@@ -49,11 +48,6 @@ struct Position {
 
 class Tile {
 public:
-    // Static texture management
-    static void LoadAllTextures();
-    static void UnloadAllTextures();
-    static bool AreTexturesLoaded();
-
     // Utility functions for tile type logic
     static bool IsBlockedType(TileType type);
     static bool IsTraversableType(TileType type);
@@ -98,10 +92,6 @@ public:
 private:
     TileType type_;
     Position position_;
-
-    // Static texture storage
-    static std::unordered_map<TileType, Texture2D> textures_;
-    static bool textures_loaded_;
 
     // Helper methods
     char GetCharForType(TileType type) const;

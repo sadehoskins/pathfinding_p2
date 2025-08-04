@@ -1,6 +1,7 @@
 #ifndef RAYLIBSTARTER_INVENTORYSYSTEM_H
 #define RAYLIBSTARTER_INVENTORYSYSTEM_H
 
+#include "../TextureManager.h"
 #include "../inventory/Inventory.h"
 #include "../items/ItemManager.h"
 #include "../items/armor/ArmorKittyBoots.h"
@@ -9,6 +10,7 @@
 #include "../items/accessories/AccessoryClawNecklace.h"
 #include "../items/weapons/WeaponSword.h"
 #include "../items/weapons/WeaponStaff.h"
+
 #include "raylib.h"
 #include <memory>
 #include <string>
@@ -45,6 +47,20 @@ public:
     // Utility
     void PrintInventoryStatus() const;
     int GetTotalStrengthBonus() const;
+
+    // **NEW** Weight management methods
+    float GetCurrentWeight() const;
+    float GetMaxCarryWeight(int player_strength) const;
+    bool IsOverweight(int player_strength) const;
+
+    // **NEW** Equipment management methods
+    bool EquipItemInSlot(int inventory_slot, EquipmentSlotType equipment_slot);
+    bool UnequipEquipmentSlot(EquipmentSlotType slot_type);
+
+    // **NEW** Item access methods
+    const ItemBase* GetItemInSlot(int slot) const;
+    int GetMaxInventorySlots() const;
+    int GetUsedInventorySlots() const;
 
 private:
     std::unique_ptr<Inventory<std::vector>> player_inventory_;

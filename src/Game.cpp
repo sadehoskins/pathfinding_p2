@@ -1,5 +1,4 @@
 #include "Game.h"
-#include "items/ItemTextureManager.h"
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -109,9 +108,60 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_ESCAPE)) {
                 SetGameState(GameState::PAUSED);
             }
+            // Player movement
+            if (player_character_) {
+                bool moved = false;
+                if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+                    moved = player_character_->TryMoveUp();
+                }
+                else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+                    moved = player_character_->TryMoveDown();
+                }
+                else if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+                    moved = player_character_->TryMoveLeft();
+                }
+                else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+                    moved = player_character_->TryMoveRight();
+                }
+
+                // **NEW** Auto-pickup hidden items when stepping on sparkles
+                if (moved) {
+                    Position player_pos = player_character_->GetPosition();
+                    if (game_map_->HasItemsAt(player_pos)) {
+                        auto items = game_map_->GetItemManager().GetItemsAtPosition(player_pos);
+                        for (const auto* item_with_pos : items) {
+                            if (!item_with_pos->is_in_treasure_chest) {
+                                std::cout << "Stepped on sparkle! Found: " << item_with_pos->item->GetName() << std::endl;
+                                player_character_->PickUpItemAt(player_pos);
+                                break; // Pick up one item at a time
+                            }
+                        }
+                    }
+                    player_character_->CheckItemsAtCurrentPosition();
+                }
+
+                // **NEW** Pick up items at current position
+                if (IsKeyPressed(KEY_F)) {
+                    player_character_->PickUpItemAt(player_character_->GetPosition());
+                }
+
+                // **NEW** Check current position for items
+                if (IsKeyPressed(KEY_E)) {
+                    std::cout << "\n=== CHECKING CURRENT POSITION ===" << std::endl;
+                    player_character_->CheckItemsAtCurrentPosition();
+                    std::cout << "=================================" << std::endl;
+                }
+            }
+
             if (IsKeyPressed(KEY_R)) {
                 // Regenerate map with clustering
                 game_map_->GenerateTerrainWithClustering();
+                // **NEW** Respawn player at new start position
+                if (player_character_) {
+                    Position new_start = game_map_->GetStartPosition();
+                    player_character_->SetPosition(new_start);
+                    std::cout << "Player respawned at: (" << new_start.x << ", " << new_start.y << ")" << std::endl;
+                }
                 std::cout << "Map regenerated with terrain clustering and items!" << std::endl;
             }
             if (IsKeyPressed(KEY_C)) {
@@ -123,7 +173,7 @@ void Game::HandleInput() {
             }
             if (IsKeyPressed(KEY_T)) {
                 // Toggle texture info
-                std::cout << "Textures loaded: " << (Tile::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
+                std::cout << "Textures loaded: " << (TextureManager::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
             }
             if (IsKeyPressed(KEY_I)) {
                 // Show item information - DEBUG VERSION
@@ -210,14 +260,16 @@ void Game::InitializeRaylib() {
 }
 
 void Game::InitializeGameSystems() {
-    // Load tile textures
-    Tile::LoadAllTextures();
-
-    // **NEW** Load item textures
-    ItemTextureManager::LoadAllItemTextures();
+    // Load all textures through TextureManager
+    TextureManager::LoadAllTextures();
 
     // Initialize map with default size (15x15)
     game_map_ = std::make_unique<Map<>>(15, 15);
+
+    // **NEW** Create player character at start position
+    Position start_pos = game_map_->GetStartPosition();
+    player_character_ = std::make_unique<PlayerChar>(start_pos, 10); // 10 base strength
+    player_character_->SetMap(game_map_.get()); // Give player reference to map
 
     // Initialize inventory system
     inventory_system_ = std::make_unique<InventorySystem>();
@@ -300,6 +352,14 @@ void Game::RenderGame() {
                 // Render the map
                 game_map_->Render(offset_x, offset_y, tile_size_);
 
+                // **NEW** Render player character
+                if (player_character_) {
+                    Position player_pos = player_character_->GetPosition();
+                    int player_screen_x = offset_x + (player_pos.x * tile_size_);
+                    int player_screen_y = offset_y + (player_pos.y * tile_size_);
+                    player_character_->Render(player_screen_x, player_screen_y, tile_size_);
+                }
+
                 // Draw legend
                 DrawText("Legend:", 10, 10, 20, BLACK);
                 DrawText("s = Start", 10, 35, 16, GREEN);
@@ -309,6 +369,20 @@ void Game::RenderGame() {
                 DrawText(". = Dirt, o = Stone, , = Grass", 10, 115, 16, DARKGRAY);
                 DrawText("t = Treasure Chest (Closed)", 10, 135, 16, GOLD);
                 DrawText("O = Treasure Chest (Opened)", 10, 155, 16, ORANGE);
+
+                // **NEW** Player info
+                if (player_character_) {
+                    Position player_pos = player_character_->GetPosition();
+                    DrawText(TextFormat("Player: (%d,%d)", player_pos.x, player_pos.y),
+                             10, 225, 16, BLUE);
+                    DrawText(TextFormat("Strength: %d", player_character_->GetTotalStrength()),
+                             10, 245, 16, GREEN);
+                    DrawText(TextFormat("Weight: %.1f/%.1f kg",
+                                        player_character_->GetCurrentWeight(),
+                                        player_character_->GetMaxCarryWeight()),
+                             10, 265, 16,
+                             player_character_->IsOverweight() ? RED : WHITE);
+                }
 
                 // **NEW** Item system info
                 DrawText(TextFormat("Items: %d", game_map_->GetItemManager().GetTotalItemCount()),
@@ -372,8 +446,8 @@ void Game::RenderUI() {
 
     // Show controls based on current state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: R=Regenerate | C=Console | SPACE=Open Chest | I=Inventory | P=Print Inv | T=Texture | ESC=Pause",
-                 10, GetScreenHeight() - 30, 12, DARKGRAY);
+        DrawText("Controls: WASD/Arrows=Move | F=Pickup | E=Check | R=Regenerate | C=Console | SPACE=Demo Chest | I=Inventory | ESC=Pause",
+                 10, GetScreenHeight() - 30, 10, DARKGRAY);
     } else if (current_state_ == GameState::INVENTORY) {
         DrawText("INVENTORY MODE - See inventory window for controls",
                  10, GetScreenHeight() - 30, 14, GOLD);
@@ -382,14 +456,14 @@ void Game::RenderUI() {
 
 
 void Game::CleanupResources() {
-    // Unload tile textures
-    Tile::UnloadAllTextures();
-
-    // Unload item textures
-    ItemTextureManager::UnloadAllItemTextures();
+    // **UPDATED** Unload all textures through TextureManager
+    TextureManager::UnloadAllTextures();
 
     // Unload render texture
     UnloadRenderTexture(canvas_);
+
+    // Reset player character
+    player_character_.reset();
 
     // Reset inventory system
     inventory_system_.reset();

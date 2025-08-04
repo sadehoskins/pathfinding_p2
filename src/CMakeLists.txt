@@ -55,8 +55,12 @@ add_executable(${PROJECT_NAME} main.cpp
         items/armor/ArmorElderWings.h
         inventory/InventorySystem.cpp
         inventory/InventorySystem.h
-        items/ItemTextureManager.cpp
-        items/ItemTextureManager.h)
+        Character.cpp
+        Character.h
+        PlayerChar.cpp
+        PlayerChar.h
+        TextureManager.cpp
+        TextureManager.h)
 
 # Add config.h.in file
 configure_file(config.h.in config.h)

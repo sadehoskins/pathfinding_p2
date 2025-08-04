@@ -6,6 +6,7 @@
 #include "Tile.h"
 #include "items/ItemManager.h"
 #include "inventory/InventorySystem.h"
+#include "PlayerChar.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -58,6 +59,9 @@ private:
 
     // Map system
     std::unique_ptr<Map<>> game_map_;
+
+    // Player character
+    std::unique_ptr<PlayerChar> player_character_;
 
     // Inventory system
     std::unique_ptr<InventorySystem> inventory_system_;
