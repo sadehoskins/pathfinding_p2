@@ -61,6 +61,7 @@ private:
     void RenderEquipmentSlots(int start_x, int start_y);
     void RenderInventorySlots(int start_x, int start_y);
     void RenderStatusMessage(int screen_width, int screen_height);
+    void RenderMinimalUI(int screen_width, int screen_height);
     void HandleSlotSelection();
     void HandleEquipmentActions();
     void SetStatusMessage(const std::string& message, float duration = 3.0f);

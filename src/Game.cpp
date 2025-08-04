@@ -339,7 +339,7 @@ void Game::RenderGame() {
                 game_map_->Render(offset_x, offset_y, tile_size_);
 
                 // Dim the background
-                DrawRectangle(0, 0, kScreenWidth, kScreenHeight, ColorAlpha(BLACK, 0.3f));
+                DrawRectangle(0, 0, kScreenWidth, kScreenHeight, ColorAlpha(BLACK, 0.7f));
             }
 
             // **NEW** Render full inventory system
