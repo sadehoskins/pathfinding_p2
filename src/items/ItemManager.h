@@ -8,6 +8,10 @@
 #include "consumables/ConsumablesHealthPotion.h"
 #include "consumables/ConsumablesBomb.h"
 #include "collectibles/GemstoneBlue.h"
+#include "armor/ArmorKittyBoots.h"
+#include "armor/ArmorElderWings.h"
+#include "accessories/AccessoryLuckyPaw.h"
+#include "accessories/AccessoryClawNecklace.h"
 #include "../Tile.h"
 #include <vector>
 #include <memory>

@@ -38,7 +38,21 @@ add_executable(${PROJECT_NAME} main.cpp
         items/consumables/ConsumablesBomb.cpp
         items/consumables/ConsumablesBomb.h
         items/collectibles/GemstoneBlue.cpp
-        items/collectibles/GemstoneBlue.h)
+        items/collectibles/GemstoneBlue.h
+        items/base-classes/ArmorItem.cpp
+        items/base-classes/ArmorItem.h
+        items/base-classes/AccessoryItem.cpp
+        items/base-classes/AccessoryItem.h
+        inventory/Inventory.h
+        inventory/EquipmentSlot.h
+        items/accessories/AccessoryLuckyPaw.cpp
+        items/accessories/AccessoryLuckyPaw.h
+        items/accessories/AccessoryClawNecklace.cpp
+        items/accessories/AccessoryClawNecklace.h
+        items/armor/ArmorKittyBoots.cpp
+        items/armor/ArmorKittyBoots.h
+        items/armor/ArmorElderWings.cpp
+        items/armor/ArmorElderWings.h)
 
 # Add config.h.in file
 configure_file(config.h.in config.h)

@@ -1,5 +1,6 @@
 #include "ItemManager.h"
 #include "raylib.h"
+
 #include <iostream>
 #include <algorithm>
 #include <chrono>
@@ -196,13 +197,13 @@ std::unique_ptr<ItemBase> ItemManager::CreateRandomItem(ItemRarity rarity) {
             item_types = {"KittyCoin"};
             break;
         case ItemRarity::UNCOMMON:
-            item_types = {"HealthPotion", "Bomb"};
+            item_types = {"HealthPotion", "Bomb", "KittyBoots", "LuckyPaw"};
             break;
         case ItemRarity::RARE:
-            item_types = {"Sword", "Staff", "BlueGemstone"};
+            item_types = {"Sword", "Staff", "BlueGemstone", "ClawNecklace"};
             break;
         case ItemRarity::LEGENDARY:
-            item_types = {"Sword", "Staff"}; // For now, weapons can be legendary
+            item_types = {"ElderWings", "Staff"}; // For now, weapons can be legendary
             break;
     }
 
@@ -249,6 +250,14 @@ std::unique_ptr<ItemBase> ItemManager::CreateSpecificItem(const std::string& ite
         return std::make_unique<WeaponStaff>();
     } else if (item_type == "BlueGemstone") {
         return std::make_unique<GemstoneBlue>();
+    } else if (item_type == "KittyBoots") {
+        return std::make_unique<ArmorKittyBoots>();
+    } else if (item_type == "ElderWings") {
+        return std::make_unique<ArmorElderWings>();
+    } else if (item_type == "LuckyPaw") {
+        return std::make_unique<AccessoryLuckyPaw>();
+    } else if (item_type == "ClawNecklace") {
+        return std::make_unique<AccessoryClawNecklace>();
     }
 
     // Fallback
