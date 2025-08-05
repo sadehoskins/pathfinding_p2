@@ -8,6 +8,7 @@
 #include "inventory/InventorySystem.h"
 #include "PlayerChar.h"
 #include "Pathfinding.h"
+#include "AutomatedTraversal.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -17,6 +18,7 @@ enum class GameState {
     PLAYING,
     PAUSED,
     INVENTORY,
+    AUTOMATED_TRAVERSAL,
     EXIT
 };
 
@@ -69,6 +71,10 @@ private:
 
     // Pathfinding system
     std::unique_ptr<Pathfinding> pathfinding_system_;
+
+    // Automated Traversal system
+    std::unique_ptr<AutomatedTraversal> automated_traversal_;
+
 
     // Rendering properties
     RenderTexture2D canvas_;

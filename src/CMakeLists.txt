@@ -62,7 +62,9 @@ add_executable(${PROJECT_NAME} main.cpp
         TextureManager.cpp
         TextureManager.h
         Pathfinding.cpp
-        Pathfinding.h)
+        Pathfinding.h
+        AutomatedTraversal.cpp
+        AutomatedTraversal.h)
 
 # Add config.h.in file
 configure_file(config.h.in config.h)

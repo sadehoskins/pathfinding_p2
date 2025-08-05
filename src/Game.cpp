@@ -177,6 +177,41 @@ void Game::HandleInput() {
                 }
             }
 
+            // **TASK 5A - AUTOMATED TRAVERSAL CONTROLS**
+            if (IsKeyPressed(KEY_A) && !automated_traversal_->IsActive()) {
+                if (automated_traversal_ && pathfinding_system_ && game_map_ && player_character_) {
+                    std::cout << "\n🤖 Starting automated traversal to end position..." << std::endl;
+                    bool success = automated_traversal_->StartAutomatedTraversal(
+                            player_character_.get(), game_map_.get(), pathfinding_system_.get());
+
+                    if (success) {
+                        std::cout << "✅ Automated traversal started successfully!" << std::endl;
+                        std::cout << "🎮 Sit back and watch the AI navigate!" << std::endl;
+                    } else {
+                        std::cout << "❌ Could not start automated traversal." << std::endl;
+                    }
+                }
+            }
+            if (IsKeyPressed(KEY_S) && automated_traversal_->IsActive()) {
+                // Stop automated traversal
+                std::cout << "\n🛑 Stopping automated traversal..." << std::endl;
+                automated_traversal_->Stop();
+            }
+            if (IsKeyPressed(KEY_V)) {
+                // Toggle path visualization
+                if (automated_traversal_) {
+                    automated_traversal_->TogglePathVisualization();
+                    std::cout << "Path visualization: " <<
+                              (automated_traversal_->IsPathVisualizationEnabled() ? "ON" : "OFF") << std::endl;
+                }
+            }
+            if (IsKeyPressed(KEY_M) && automated_traversal_->IsComplete()) {
+                // Show final summary again
+                if (automated_traversal_) {
+                    automated_traversal_->ShowFinalSummary();
+                }
+            }
+
             // Player movement
             if (player_character_) {
                 bool moved = false;
@@ -347,6 +382,9 @@ void Game::InitializeGameSystems() {
     // Initialize pathfinding system
     pathfinding_system_ = std::make_unique<Pathfinding>();
 
+    // Initialize automated traversal
+    automated_traversal_ = std::make_unique<AutomatedTraversal>();
+
     // Some test items for inventory demonstration
     inventory_system_->AddItemToInventory(std::make_unique<WeaponSword>());
     inventory_system_->AddItemToInventory(std::make_unique<ArmorKittyBoots>());
@@ -358,12 +396,18 @@ void Game::InitializeGameSystems() {
     game_map_->PrintMapInfo();
     game_map_->GetItemManager().PrintItemsInfo();
     std::cout << "===================" << std::endl;
+
+
 }
 
 void Game::UpdateGameLogic() {
     // Update game systems based on current state
     switch (current_state_) {
         case GameState::PLAYING:
+            // **NEW** automated traversal system
+            if (automated_traversal_) {
+                automated_traversal_->Update();
+            }
         case GameState::INVENTORY:
             // **NEW** Update inventory system
             if (inventory_system_) {
@@ -477,6 +521,18 @@ void Game::RenderGame() {
             if (inventory_system_) {
                 inventory_system_->Render(kScreenWidth, kScreenHeight);
             }
+
+            // **NEW** Show automated traversal status
+            if (automated_traversal_->IsActive()) {
+                std::string status = automated_traversal_->GetStatusMessage();
+                DrawText(status.c_str(), 10, 300, 18,
+                         automated_traversal_->IsComplete() ? GREEN : YELLOW);
+
+                if (automated_traversal_->IsMoving()) {
+                    DrawText("🤖 AI is navigating...", 10, 325, 16, SKYBLUE);
+                }
+            }
+
             break;
 
         case GameState::INVENTORY:
@@ -519,8 +575,14 @@ void Game::RenderUI() {
 
     // Show controls based on current state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: WASD=Move | F=Pick | E=Check | R=Regen | I=Inventory | SPACE=Chest | 1=SortWeight | 2=SortName | 3=SortValue | 4=SortType | 6=TestItems | 7=Demo",
-                 10, GetScreenHeight() - 30, 8, DARKGRAY);
+        if (automated_traversal_ && automated_traversal_->IsActive()) {
+            DrawText("AUTOMATED MODE: S=Stop | V=ToggleViz | M=Summary | I=Inventory | 1-4=Sort",
+                     10, GetScreenHeight() - 30, 8, YELLOW);
+        } else {
+            DrawText("Controls: WASD=Move | F=Pick | A=AutoTraversal | I=Inventory | 8=Pathfind | 1-4=Sort | 6=TestItems | 7=Demo",
+                     10, GetScreenHeight() - 30, 7, DARKGRAY);
+        }
+
     } else if (current_state_ == GameState::INVENTORY) {
         DrawText("INVENTORY MODE - See inventory window for controls",
                  10, GetScreenHeight() - 30, 14, GOLD);
@@ -546,6 +608,9 @@ void Game::CleanupResources() {
 
     // Reset pathfinding
     pathfinding_system_.reset();
+
+    // Reset automated traversal
+    automated_traversal_.reset();
 }
 
 // ******************** NEW METHODS FOR TASK 1C ********************
@@ -607,3 +672,4 @@ void Game::DemoInventoryIntegration() {
     std::cout << "Press 'I' in-game to open inventory!" << std::endl;
     std::cout << "===================================" << std::endl;
 }
+
