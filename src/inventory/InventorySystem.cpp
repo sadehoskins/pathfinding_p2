@@ -697,3 +697,371 @@ int InventorySystem::GetUsedInventorySlots() const {
 
     return player_inventory_->GetUsedSlots();
 }
+// ******************** TASK 3A - INVENTORY SORTING ALGORITHMS ********************
+
+void InventorySystem::SortByWeight(bool ascending) {
+    if (!player_inventory_) {
+        std::cout << "No inventory to sort!" << std::endl;
+        return;
+    }
+
+    std::cout << "\n=== SORTING BY WEIGHT (" << (ascending ? "ASCENDING" : "DESCENDING") << ") ===" << std::endl;
+
+    // Print inventory before sorting
+    std::cout << "BEFORE SORTING:" << std::endl;
+    PrintInventoryItems();
+
+    // Get all non-null items with their slot positions
+    std::vector<std::pair<int, std::unique_ptr<ItemBase>>> items_to_sort;
+
+    // Extract items from inventory
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        auto item = player_inventory_->RemoveItem(i);
+        if (item) {
+            items_to_sort.emplace_back(i, std::move(item));
+        }
+    }
+
+    // **BUBBLE SORT** by weight (following project rules: reusable, decoupled)
+    for (size_t i = 0; i < items_to_sort.size(); ++i) {
+        for (size_t j = 0; j < items_to_sort.size() - 1 - i; ++j) {
+            float weight1 = items_to_sort[j].second->GetWeight();
+            float weight2 = items_to_sort[j + 1].second->GetWeight();
+
+            bool should_swap = ascending ? (weight1 > weight2) : (weight1 < weight2);
+
+            if (should_swap) {
+                std::swap(items_to_sort[j], items_to_sort[j + 1]);
+            }
+        }
+    }
+
+    // Put sorted items back into inventory
+    for (auto& item_pair : items_to_sort) {
+        player_inventory_->AddItem(std::move(item_pair.second));
+    }
+
+    // Print inventory after sorting
+    std::cout << "AFTER SORTING:" << std::endl;
+    PrintInventoryItems();
+    std::cout << "=================================" << std::endl;
+
+    SetStatusMessage("Inventory sorted by weight!", 3.0f);
+}
+
+void InventorySystem::SortByName(bool ascending) {
+    if (!player_inventory_) {
+        std::cout << "No inventory to sort!" << std::endl;
+        return;
+    }
+
+    std::cout << "\n=== SORTING BY NAME (" << (ascending ? "A-Z" : "Z-A") << ") ===" << std::endl;
+
+    // Print inventory before sorting
+    std::cout << "BEFORE SORTING:" << std::endl;
+    PrintInventoryItems();
+
+    // Get all non-null items
+    std::vector<std::pair<int, std::unique_ptr<ItemBase>>> items_to_sort;
+
+    // Extract items from inventory
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        auto item = player_inventory_->RemoveItem(i);
+        if (item) {
+            items_to_sort.emplace_back(i, std::move(item));
+        }
+    }
+
+    // **SELECTION SORT** by name (different algorithm for variety)
+    for (size_t i = 0; i < items_to_sort.size(); ++i) {
+        size_t target_index = i;
+
+        for (size_t j = i + 1; j < items_to_sort.size(); ++j) {
+            const std::string& name1 = items_to_sort[target_index].second->GetName();
+            const std::string& name2 = items_to_sort[j].second->GetName();
+
+            // Compare strings alphabetically
+            bool should_select = ascending ? (name2 < name1) : (name2 > name1);
+
+            if (should_select) {
+                target_index = j;
+            }
+        }
+
+        if (target_index != i) {
+            std::swap(items_to_sort[i], items_to_sort[target_index]);
+        }
+    }
+
+    // Put sorted items back into inventory
+    for (auto& item_pair : items_to_sort) {
+        player_inventory_->AddItem(std::move(item_pair.second));
+    }
+
+    // Print inventory after sorting
+    std::cout << "AFTER SORTING:" << std::endl;
+    PrintInventoryItems();
+    std::cout << "===============================" << std::endl;
+
+    SetStatusMessage("Inventory sorted by name!", 3.0f);
+}
+
+void InventorySystem::SortByValue(bool ascending) {
+    if (!player_inventory_) {
+        std::cout << "No inventory to sort!" << std::endl;
+        return;
+    }
+
+    std::cout << "\n=== SORTING BY VALUE (" << (ascending ? "LOW-HIGH" : "HIGH-LOW") << ") ===" << std::endl;
+
+    // Print inventory before sorting
+    std::cout << "BEFORE SORTING:" << std::endl;
+    PrintInventoryItems();
+
+    // Get all non-null items
+    std::vector<std::pair<int, std::unique_ptr<ItemBase>>> items_to_sort;
+
+    // Extract items from inventory
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        auto item = player_inventory_->RemoveItem(i);
+        if (item) {
+            items_to_sort.emplace_back(i, std::move(item));
+        }
+    }
+
+    // **INSERTION SORT** by value (third different algorithm)
+    for (size_t i = 1; i < items_to_sort.size(); ++i) {
+        auto current_item = std::move(items_to_sort[i]);
+        int current_value = current_item.second->GetValue();
+
+        size_t j = i;
+        while (j > 0) {
+            int compare_value = items_to_sort[j - 1].second->GetValue();
+            bool should_move = ascending ? (compare_value > current_value) : (compare_value < current_value);
+
+            if (!should_move) break;
+
+            items_to_sort[j] = std::move(items_to_sort[j - 1]);
+            --j;
+        }
+
+        items_to_sort[j] = std::move(current_item);
+    }
+
+    // Put sorted items back into inventory
+    for (auto& item_pair : items_to_sort) {
+        player_inventory_->AddItem(std::move(item_pair.second));
+    }
+
+    // Print inventory after sorting
+    std::cout << "AFTER SORTING:" << std::endl;
+    PrintInventoryItems();
+    std::cout << "===============================" << std::endl;
+
+    SetStatusMessage("Inventory sorted by value!", 3.0f);
+}
+
+void InventorySystem::SortByType(bool ascending) {
+    if (!player_inventory_) {
+        std::cout << "No inventory to sort!" << std::endl;
+        return;
+    }
+
+    std::cout << "\n=== SORTING BY TYPE (" << (ascending ? "A-Z" : "Z-A") << ") ===" << std::endl;
+
+    // Print inventory before sorting
+    std::cout << "BEFORE SORTING:" << std::endl;
+    PrintInventoryItems();
+
+    // Get all non-null items
+    std::vector<std::pair<int, std::unique_ptr<ItemBase>>> items_to_sort;
+
+    // Extract items from inventory
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        auto item = player_inventory_->RemoveItem(i);
+        if (item) {
+            items_to_sort.emplace_back(i, std::move(item));
+        }
+    }
+
+    // **BUBBLE SORT** by type description (reusing algorithm but different comparison)
+    for (size_t i = 0; i < items_to_sort.size(); ++i) {
+        for (size_t j = 0; j < items_to_sort.size() - 1 - i; ++j) {
+            const std::string& type1 = items_to_sort[j].second->GetTypeDescription();
+            const std::string& type2 = items_to_sort[j + 1].second->GetTypeDescription();
+
+            bool should_swap = ascending ? (type1 > type2) : (type1 < type2);
+
+            if (should_swap) {
+                std::swap(items_to_sort[j], items_to_sort[j + 1]);
+            }
+        }
+    }
+
+    // Put sorted items back into inventory
+    for (auto& item_pair : items_to_sort) {
+        player_inventory_->AddItem(std::move(item_pair.second));
+    }
+
+    // Print inventory after sorting
+    std::cout << "AFTER SORTING:" << std::endl;
+    PrintInventoryItems();
+    std::cout << "==============================" << std::endl;
+
+    SetStatusMessage("Inventory sorted by type!", 3.0f);
+}
+
+// ******************** HELPER METHOD FOR SORTING DISPLAY ********************
+
+void InventorySystem::PrintInventoryItems() const {
+    if (!player_inventory_) {
+        return;
+    }
+
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        const ItemBase* item = player_inventory_->GetItem(i);
+        if (item) {
+            std::cout << "Slot " << i << ": " << item->GetName()
+                      << " | Weight: " << item->GetWeight() << "kg"
+                      << " | Value: " << item->GetValue() << " coins"
+                      << " | Type: " << item->GetTypeDescription()
+                      << " | Rarity: " << item->GetRarityName()
+                      << std::endl;
+        } else {
+            std::cout << "Slot " << i << ": [Empty]" << std::endl;
+        }
+    }
+}
+void InventorySystem::GenerateTestInventory() {
+    if (!player_inventory_) {
+        return;
+    }
+
+    std::cout << "\n=== GENERATING TEST INVENTORY FOR SORTING DEMO ===" << std::endl;
+
+    // Clear current inventory (keep equipment)
+    for (int i = 0; i < player_inventory_->GetMaxSlots(); ++i) {
+        player_inventory_->RemoveItem(i);
+    }
+
+    // Create varied items to demonstrate sorting (15 items total)
+    std::vector<std::unique_ptr<ItemBase>> test_items;
+
+    // **VARIED WEIGHTS** - Different items with different weights
+    test_items.push_back(std::make_unique<CurrencyKittyCoin>(10));        // 0.1kg, 1 coin
+    test_items.push_back(std::make_unique<ConsumablesHealthPotion>());     // 0.5kg, 50 coins
+    test_items.push_back(std::make_unique<AccessoryLuckyPaw>());           // 0.3kg, 90 coins
+    test_items.push_back(std::make_unique<ConsumablesBomb>());             // 1.2kg, 75 coins
+    test_items.push_back(std::make_unique<ArmorKittyBoots>());             // 1.2kg, 80 coins
+    test_items.push_back(std::make_unique<WeaponStaff>());                 // 1.8kg, 120 coins
+    test_items.push_back(std::make_unique<AccessoryClawNecklace>());       // 0.5kg, 120 coins
+    test_items.push_back(std::make_unique<WeaponSword>());                 // 2.5kg, 150 coins
+    test_items.push_back(std::make_unique<ArmorElderWings>());             // 2.8kg, 250 coins
+    test_items.push_back(std::make_unique<GemstoneBlue>());                // 0.3kg, 200 coins
+
+    // **MORE VARIED ITEMS** - Add duplicates with different amounts for variety
+    test_items.push_back(std::make_unique<CurrencyKittyCoin>(5));          // 0.1kg, 1 coin
+    test_items.push_back(std::make_unique<CurrencyKittyCoin>(25));         // 0.1kg, 1 coin
+    test_items.push_back(std::make_unique<ConsumablesHealthPotion>());     // 0.5kg, 50 coins
+    test_items.push_back(std::make_unique<ConsumablesBomb>());             // 1.2kg, 75 coins
+    test_items.push_back(std::make_unique<GemstoneBlue>());                // 0.3kg, 200 coins
+
+    std::cout << "Generated " << test_items.size() << " varied test items:" << std::endl;
+    std::cout << "- Weight range: 0.1kg to 2.8kg" << std::endl;
+    std::cout << "- Value range: 1 to 250 kitty coins" << std::endl;
+    std::cout << "- Name variety: A-Z range (Accessory to Wooden)" << std::endl;
+    std::cout << "- Type variety: Weapon, Armor, Accessory, Consumable, Currency, Collectible" << std::endl;
+
+    // Add all items to inventory
+    for (auto& item : test_items) {
+        if (!AddItemToInventory(std::move(item))) {
+            std::cout << "Warning: Inventory full, couldn't add all test items!" << std::endl;
+            break;
+        }
+    }
+
+    SetStatusMessage("Test inventory generated for sorting demo!", 3.0f);
+    std::cout << "========================================================" << std::endl;
+}
+
+void InventorySystem::DemonstrateAllSorting() {
+    if (!player_inventory_) {
+        std::cout << "No inventory available for demonstration!" << std::endl;
+        return;
+    }
+
+    std::cout << "\n" << std::string(60, '=') << std::endl;
+    std::cout << "           TASK 3B - SORTING ALGORITHMS DEMONSTRATION" << std::endl;
+    std::cout << std::string(60, '=') << std::endl;
+
+    std::cout << "\nDemonstrating ALL sorting functions with varied inventory..." << std::endl;
+    std::cout << "Press ENTER to continue between each demonstration..." << std::endl;
+
+    // Show initial unsorted inventory
+    std::cout << "\n>>> INITIAL UNSORTED INVENTORY <<<" << std::endl;
+    PrintInventoryItems();
+    std::cout << "\nPress ENTER to start sorting demonstrations...";
+    std::cin.get(); // Wait for user input
+
+    // **1. DEMONSTRATE WEIGHT SORTING**
+    std::cout << "\n" << std::string(50, '-') << std::endl;
+    std::cout << "DEMONSTRATION 1/4: SORTING BY WEIGHT" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    SortByWeight(true); // Ascending
+    std::cout << "\nPress ENTER to continue to next sorting demo...";
+    std::cin.get();
+
+    // **2. DEMONSTRATE NAME SORTING**
+    std::cout << "\n" << std::string(50, '-') << std::endl;
+    std::cout << "DEMONSTRATION 2/4: SORTING BY NAME (ALPHABETICAL)" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    SortByName(true); // A-Z
+    std::cout << "\nPress ENTER to continue to next sorting demo...";
+    std::cin.get();
+
+    // **3. DEMONSTRATE VALUE SORTING**
+    std::cout << "\n" << std::string(50, '-') << std::endl;
+    std::cout << "DEMONSTRATION 3/4: SORTING BY VALUE (PRICE)" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    SortByValue(false); // High to Low (more interesting)
+    std::cout << "\nPress ENTER to continue to final sorting demo...";
+    std::cin.get();
+
+    // **4. DEMONSTRATE TYPE SORTING**
+    std::cout << "\n" << std::string(50, '-') << std::endl;
+    std::cout << "DEMONSTRATION 4/4: SORTING BY TYPE" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
+    SortByType(true); // A-Z by type
+    std::cout << "\nPress ENTER to finish demonstration...";
+    std::cin.get();
+
+    // **FINAL SUMMARY**
+    std::cout << "\n" << std::string(60, '=') << std::endl;
+    std::cout << "           SORTING DEMONSTRATION COMPLETE!" << std::endl;
+    std::cout << std::string(60, '=') << std::endl;
+    std::cout << "✅ Demonstrated Weight Sorting (Bubble Sort Algorithm)" << std::endl;
+    std::cout << "✅ Demonstrated Name Sorting (Selection Sort Algorithm)" << std::endl;
+    std::cout << "✅ Demonstrated Value Sorting (Insertion Sort Algorithm)" << std::endl;
+    std::cout << "✅ Demonstrated Type Sorting (Bubble Sort Algorithm)" << std::endl;
+    std::cout << "\nAll sorting algorithms successfully demonstrated with varied inventory!" << std::endl;
+    std::cout << "Items ranged from 0.1kg to 2.8kg weight, 1 to 250 coin values." << std::endl;
+    std::cout << std::string(60, '=') << std::endl;
+
+    SetStatusMessage("All sorting algorithms demonstrated successfully!", 5.0f);
+}
+
+void InventorySystem::RunSortingDemo() {
+    std::cout << "\n🎯 STARTING TASK 3B - SORTING DEMONSTRATION 🎯" << std::endl;
+
+    // Step 1: Generate test inventory with 15 varied items
+    GenerateTestInventory();
+
+    // Wait a moment for user to see generation
+    std::cout << "\nTest inventory generated! Press ENTER to start sorting demonstrations...";
+    std::cin.get();
+
+    // Step 2: Demonstrate all sorting algorithms
+    DemonstrateAllSorting();
+
+    std::cout << "\n🎉 TASK 3B DEMONSTRATION COMPLETE! 🎉" << std::endl;
+}

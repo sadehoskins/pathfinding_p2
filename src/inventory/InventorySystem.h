@@ -48,19 +48,33 @@ public:
     void PrintInventoryStatus() const;
     int GetTotalStrengthBonus() const;
 
-    // **NEW** Weight management methods
+    // Weight management methods
     float GetCurrentWeight() const;
     float GetMaxCarryWeight(int player_strength) const;
     bool IsOverweight(int player_strength) const;
 
-    // **NEW** Equipment management methods
+    // Equipment management methods
     bool EquipItemInSlot(int inventory_slot, EquipmentSlotType equipment_slot);
     bool UnequipEquipmentSlot(EquipmentSlotType slot_type);
 
-    // **NEW** Item access methods
+    // Item access methods
     const ItemBase* GetItemInSlot(int slot) const;
     int GetMaxInventorySlots() const;
     int GetUsedInventorySlots() const;
+
+    // Inventory sorting methods
+    void SortByWeight(bool ascending = true);
+    void SortByName(bool ascending = true);
+    void SortByValue(bool ascending = true);
+    void SortByType(bool ascending = true);  // Bonus: sort by item type
+
+    // **NEW** Helper method for sorting display
+    void PrintInventoryItems() const;
+
+    // **TASK 3B** Sorting demonstration methods
+    void GenerateTestInventory();
+    void DemonstrateAllSorting();
+    void RunSortingDemo();
 
 private:
     std::unique_ptr<Inventory<std::vector>> player_inventory_;

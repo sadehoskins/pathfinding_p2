@@ -108,6 +108,46 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_ESCAPE)) {
                 SetGameState(GameState::PAUSED);
             }
+
+            // **TASK 3B - SORTING CONTROLS** (moved outside inventory check)
+            if (IsKeyPressed(KEY_ONE)) {
+                if (inventory_system_) {
+                    std::cout << "\n🔸 Sorting inventory by WEIGHT..." << std::endl;
+                    inventory_system_->SortByWeight(true);
+                }
+            }
+            if (IsKeyPressed(KEY_TWO)) {
+                if (inventory_system_) {
+                    std::cout << "\n🔸 Sorting inventory by NAME..." << std::endl;
+                    inventory_system_->SortByName(true);
+                }
+            }
+            if (IsKeyPressed(KEY_THREE)) {
+                if (inventory_system_) {
+                    std::cout << "\n🔸 Sorting inventory by VALUE..." << std::endl;
+                    inventory_system_->SortByValue(false); // High to low is more interesting
+                }
+            }
+            if (IsKeyPressed(KEY_FOUR)) {
+                if (inventory_system_) {
+                    std::cout << "\n🔸 Sorting inventory by TYPE..." << std::endl;
+                    inventory_system_->SortByType(true);
+                }
+            }
+            // **TASK 3B - DEMO CONTROLS**
+            if (IsKeyPressed(KEY_SIX)) {
+                if (inventory_system_) {
+                    std::cout << "\n🎯 Generating test inventory for sorting demo..." << std::endl;
+                    inventory_system_->GenerateTestInventory();
+                }
+            }
+            if (IsKeyPressed(KEY_SEVEN)) {
+                if (inventory_system_) {
+                    std::cout << "\n🎯 Running complete sorting demonstration..." << std::endl;
+                    inventory_system_->RunSortingDemo();
+                }
+            }
+
             // Player movement
             if (player_character_) {
                 bool moved = false;
@@ -124,7 +164,12 @@ void Game::HandleInput() {
                     moved = player_character_->TryMoveRight();
                 }
 
-                // **NEW** Auto-pickup hidden items when stepping on sparkles
+                // **NEW** Pick up items at current position
+                if (IsKeyPressed(KEY_F)) {
+                    player_character_->PickUpItemAt(player_character_->GetPosition());
+                }
+
+                // Auto-pickup hidden items when stepping on sparkles
                 if (moved) {
                     Position player_pos = player_character_->GetPosition();
                     if (game_map_->HasItemsAt(player_pos)) {
@@ -140,11 +185,6 @@ void Game::HandleInput() {
                     player_character_->CheckItemsAtCurrentPosition();
                 }
 
-                // **NEW** Pick up items at current position
-                if (IsKeyPressed(KEY_F)) {
-                    player_character_->PickUpItemAt(player_character_->GetPosition());
-                }
-
                 // **NEW** Check current position for items
                 if (IsKeyPressed(KEY_E)) {
                     std::cout << "\n=== CHECKING CURRENT POSITION ===" << std::endl;
@@ -156,6 +196,7 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_R)) {
                 // Regenerate map with clustering
                 game_map_->GenerateTerrainWithClustering();
+
                 // **NEW** Respawn player at new start position
                 if (player_character_) {
                     Position new_start = game_map_->GetStartPosition();
@@ -446,8 +487,8 @@ void Game::RenderUI() {
 
     // Show controls based on current state
     if (current_state_ == GameState::PLAYING) {
-        DrawText("Controls: WASD/Arrows=Move | F=Pickup | E=Check | R=Regenerate | C=Console | SPACE=Demo Chest | I=Inventory | ESC=Pause",
-                 10, GetScreenHeight() - 30, 10, DARKGRAY);
+        DrawText("Controls: WASD=Move | F=Pick | E=Check | R=Regen | I=Inventory | SPACE=Chest | 1=SortWeight | 2=SortName | 3=SortValue | 4=SortType | 6=TestItems | 7=Demo",
+                 10, GetScreenHeight() - 30, 8, DARKGRAY);
     } else if (current_state_ == GameState::INVENTORY) {
         DrawText("INVENTORY MODE - See inventory window for controls",
                  10, GetScreenHeight() - 30, 14, GOLD);
@@ -456,7 +497,7 @@ void Game::RenderUI() {
 
 
 void Game::CleanupResources() {
-    // **UPDATED** Unload all textures through TextureManager
+    // Unload all textures through TextureManager
     TextureManager::UnloadAllTextures();
 
     // Unload render texture
