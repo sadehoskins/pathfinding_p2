@@ -33,9 +33,9 @@ public:
     InventorySystem& GetInventorySystem() { return *inventory_system_; }
     const InventorySystem& GetInventorySystem() const { return *inventory_system_; }
 
-    // **STRENGTH SYSTEM** (required)
-    int GetBaseStrength() const { return base_strength_; }
-    int GetTotalStrength() const; // Base + equipment bonuses
+    // **STRENGTH SYSTEM** (required) - Override base class methods
+    int GetStrength() const override; // Base + equipment bonuses
+    int GetTotalStrength() const { return GetStrength(); } // Alias for compatibility
     float GetMaxCarryWeight() const; // Based on total strength
     float GetCurrentWeight() const;
     bool IsOverweight() const;
@@ -48,6 +48,10 @@ public:
     bool EquipSelectedItem(EquipmentSlotType slot_type);
     bool UnequipItem(EquipmentSlotType slot_type);
 
+    // **ENHANCED PLAYER METHODS** (using base class health system)
+    void SetName(const std::string& name) override { Character::SetName(name); }
+    void PrintStatus() const override; // Enhanced version showing inventory info
+    void Update() override; // Player-specific update logic
 
     // Rendering
     void Render(int screen_x, int screen_y, int tile_size) const override;
@@ -55,16 +59,14 @@ public:
     void UnloadTexture();
 
     // Utility
-    void PrintStatus() const;
     void CheckItemsAtCurrentPosition() const;
 
 private:
-    // Character attributes
-    int base_strength_;
-    Map<>* current_map_;
-
     // **INVENTORY (required - 10 item slots + equipment slots)**
     std::unique_ptr<InventorySystem> inventory_system_;
+
+    // Map reference
+    Map<>* current_map_;
 
     // Rendering
     Texture2D character_texture_;

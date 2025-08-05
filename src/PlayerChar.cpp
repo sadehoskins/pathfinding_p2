@@ -7,14 +7,19 @@
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
 PlayerChar::PlayerChar(const Position& start_position, int base_strength)
-        : Character(start_position)
-        , base_strength_(base_strength)
+        : Character(start_position, CharacterType::PLAYER)  // **UPDATED** - Use Character constructor
         , current_map_(nullptr)
         , inventory_system_(std::make_unique<InventorySystem>())
         , texture_loaded_(false) {
 
+    // Set base strength using Character's system
+    base_strength_ = base_strength;
+
+    // Set default player name
+    SetName("Player");
+
     std::cout << "PlayerChar created at position (" << start_position.x << ", " << start_position.y
-              << ") with " << base_strength_ << " base strength." << std::endl;
+              << ") with " << base_strength << " base strength." << std::endl;
 
     LoadTexture();
 }
@@ -102,8 +107,8 @@ bool PlayerChar::TryMoveRight() {
 
 // ******************** STRENGTH SYSTEM (required) ********************
 
-int PlayerChar::GetTotalStrength() const {
-    int total = base_strength_;
+int PlayerChar::GetStrength() const {
+    int total = base_strength_;  // Use base class member
 
     // Add equipment bonuses
     if (inventory_system_) {
@@ -112,6 +117,7 @@ int PlayerChar::GetTotalStrength() const {
 
     return total;
 }
+
 
 float PlayerChar::GetMaxCarryWeight() const {
     // Each point of strength allows 2kg of carry weight
@@ -317,12 +323,16 @@ void PlayerChar::UnloadTexture() {
 
 // ******************** UTILITY ********************
 
+// Enhanced PrintStatus method that combines Character info + Player-specific info:
+
 void PlayerChar::PrintStatus() const {
-    std::cout << "\n=== PLAYER CHARACTER STATUS ===" << std::endl;
-    std::cout << "Position: (" << position_.x << ", " << position_.y << ")" << std::endl;
-    std::cout << "Base Strength: " << base_strength_ << std::endl;
-    std::cout << "Total Strength: " << GetTotalStrength() << " (+"
-              << (GetTotalStrength() - base_strength_) << " from equipment)" << std::endl;
+    // Call base class status first
+    Character::PrintStatus();
+
+    // Add player-specific information
+    std::cout << "\n=== PLAYER-SPECIFIC INFO ===" << std::endl;
+    std::cout << "Total Strength: " << GetStrength() << " (Base: " << base_strength_
+              << " + Equipment: " << (GetStrength() - base_strength_) << ")" << std::endl;
     std::cout << "Weight: " << GetCurrentWeight() << "/" << GetMaxCarryWeight() << " kg";
     if (IsOverweight()) {
         std::cout << " **OVERWEIGHT!**";
@@ -330,10 +340,39 @@ void PlayerChar::PrintStatus() const {
     std::cout << std::endl;
 
     if (inventory_system_) {
-        inventory_system_->PrintInventoryStatus();
+        std::cout << "Inventory: " << inventory_system_->GetUsedInventorySlots()
+                  << "/" << inventory_system_->GetMaxInventorySlots() << " slots used" << std::endl;
+        int strength_bonus = inventory_system_->GetTotalStrengthBonus();
+        if (strength_bonus > 0) {
+            std::cout << "Equipment Strength Bonus: +" << strength_bonus << std::endl;
+        }
+    }
+    std::cout << "===============================" << std::endl;
+}
+
+void PlayerChar::Update() {
+    // **PLAYER-SPECIFIC UPDATE LOGIC**
+
+    // Update inventory system
+    if (inventory_system_) {
+        inventory_system_->Update();
     }
 
-    std::cout << "===============================" << std::endl;
+    // Check if player is overweight and update status
+    if (IsOverweight()) {
+        // Could add visual indicators, sound effects, etc. here in the future
+        // For now, just ensure the overweight state is properly tracked
+    }
+
+    // Future player-specific updates can go here:
+    // - Health regeneration over time
+    // - Status effect updates (poison, buffs, etc.)
+    // - Experience/leveling systems
+    // - Achievement tracking
+    // - Auto-save triggers
+
+    // Call base class update for any shared character logic
+    Character::Update();
 }
 
 // ******************** PRIVATE HELPER METHODS ********************
