@@ -32,7 +32,7 @@ public:
     Tile& GetTile(const Position& pos);
     const Tile& GetTile(const Position& pos) const;
 
-    // **NEW** Item System Access
+    // Item System Access
     ItemManager& GetItemManager() { return item_manager_; }
     const ItemManager& GetItemManager() const { return item_manager_; }
     bool HasTreasureChestAt(const Position& pos) const;
@@ -64,7 +64,7 @@ private:
     Position start_pos_;
     Position end_pos_;
 
-    // **NEW** Item management
+    // Item management
     ItemManager item_manager_;
 
     // Helper methods
@@ -76,7 +76,7 @@ private:
     void PlaceVegetationClusters();
     void FillTraversableAreas();
 
-    // **NEW** Item and treasure chest placement
+    // Item and treasure chest placement
     void PlaceItemsAndTreasureChests();
     void PlaceTreasureChests();
 
@@ -142,7 +142,7 @@ void Map<TileContainer>::GenerateStaticMap() {
     }
 
     EnsurePathExists();
-    PlaceItemsAndTreasureChests();  // ** ENSURE THIS IS CALLED **
+    PlaceItemsAndTreasureChests();  // Ensure this is called!
 }
 
 template<typename TileContainer>
@@ -151,7 +151,7 @@ void Map<TileContainer>::GenerateRandomMap() {
     PlaceStartAndEnd();
     GenerateBlockedTiles();
     EnsurePathExists();
-    PlaceItemsAndTreasureChests();  // ** ENSURE THIS IS CALLED **
+    PlaceItemsAndTreasureChests();  // Ensure this is called!
 }
 
 template<typename TileContainer>
@@ -159,7 +159,7 @@ void Map<TileContainer>::GenerateTerrainWithClustering() {
     PlaceStartAndEnd();
     GenerateClusteredTerrain();
     EnsurePathExists();
-    PlaceItemsAndTreasureChests();  // ** CRITICAL: THIS WAS MISSING **
+    PlaceItemsAndTreasureChests();
 }
 
 template<typename TileContainer>
@@ -205,13 +205,13 @@ void Map<TileContainer>::PlaceStartAndEnd() {
 
 template<typename TileContainer>
 void Map<TileContainer>::GenerateClusteredTerrain() {
-    // Step 1: Place water clusters
+    // Place water clusters
     PlaceWaterClusters();
 
-    // Step 2: Place vegetation clusters (trees/bushes)
+    // Place vegetation clusters (trees/bushes)
     PlaceVegetationClusters();
 
-    // Step 3: Fill remaining traversable areas with varied tiles
+    // Fill remaining traversable areas with different tiles
     FillTraversableAreas();
 }
 
@@ -356,7 +356,7 @@ void Map<TileContainer>::FillTraversableAreas() {
     }
 }
 
-// **NEW** Item and treasure chest placement methods
+// Item and treasure chest placement methods
 template<typename TileContainer>
 void Map<TileContainer>::PlaceItemsAndTreasureChests() {
     // Generate items using ItemManager
@@ -381,7 +381,7 @@ void Map<TileContainer>::PlaceTreasureChests() {
     }
 }
 
-// **NEW** Item system access methods
+// Item system access methods
 template<typename TileContainer>
 bool Map<TileContainer>::HasTreasureChestAt(const Position& pos) const {
     if (!IsValidPosition(pos)) return false;
@@ -438,7 +438,7 @@ int Map<TileContainer>::CountWaterNeighbors(int x, int y) const {
 
 template<typename TileContainer>
 void Map<TileContainer>::EnsurePathExists() {
-    // Simple path creation - make sure there's at least one path down the middle
+    // Simple path creation (at least one path down the middle)
     int middle_x = width_ / 2;
     for (int y = 0; y < height_; ++y) {
         if (Tile::IsBlockedType(tiles_[y][middle_x].GetType())) {
@@ -531,7 +531,7 @@ void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const
         }
     }
 
-    // **NEW** Render sparkle effects for hidden items
+    // Render sparkle effects for hidden items
     if (TextureManager::AreTexturesLoaded()) {
         Texture2D sparkle_texture = TextureManager::GetUITexture("sparkle");
 
@@ -541,7 +541,7 @@ void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const
                 int item_screen_y = offset_y + (item_with_pos.position.y * tile_size);
 
                 if (sparkle_texture.id != 0) {
-                    // **SPARKLE TEXTURE** - Draw sparkle with animated effect
+                    // Sparkle texture -> Draw sparkle with animated effect
 
                     // Create pulsing/glowing effect based on time
                     float time = GetTime();
@@ -580,7 +580,7 @@ void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const
                     DrawTexturePro(sparkle_texture, source, dest, origin, rotation, sparkle_color);
 
                 } else {
-                    // **FALLBACK** - Simple colored circle if no sparkle texture
+                    // Fallback - Simple colored circle if no sparkle texture
                     Color item_color = WHITE;
                     switch (item_with_pos.item->GetRarity()) {
                         case ItemRarity::COMMON: item_color = LIGHTGRAY; break;
@@ -601,7 +601,7 @@ void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const
             }
         }
     } else {
-        // **FALLBACK** - Simple indicators if textures not loaded
+        // Fallback - Simple indicators if textures not loaded
         for (const auto& item_with_pos : item_manager_.GetAllItems()) {
             if (!item_with_pos.is_in_treasure_chest) {
                 int item_screen_x = offset_x + (item_with_pos.position.x * tile_size);

@@ -17,58 +17,58 @@ public:
     // Destructor
     ~AutomatedTraversal();
 
-    // **MAIN TRAVERSAL METHODS**
+    // Main traversal methods
     bool StartAutomatedTraversal(PlayerChar* player, Map<>* game_map, Pathfinding* pathfinder);
     void Update(); // Called each frame to progress movement
     void Stop(); // Stop current traversal
 
-    // **STATE QUERIES**
+    // State queries
     bool IsActive() const { return is_active_; }
     bool IsComplete() const { return is_complete_; }
     bool IsMoving() const { return is_moving_; }
 
-    // **PATH VISUALIZATION**
+    // Path visualization
     void RenderPathVisualization(int offset_x, int offset_y, int tile_size) const;
     bool IsPathVisualizationEnabled() const { return show_path_visualization_; }
     void TogglePathVisualization() { show_path_visualization_ = !show_path_visualization_; }
 
-    // **PROGRESS INFO**
+    // Progress info
     int GetCurrentStep() const { return current_step_; }
     int GetTotalSteps() const { return static_cast<int>(calculated_path_.size()); }
     float GetProgress() const;
     std::string GetStatusMessage() const { return status_message_; }
 
-    // **FINAL SUMMARY**
+    // Final summary
     void ShowFinalSummary() const;
 
 private:
-    // **CORE STATE**
+    // Core state
     bool is_active_;
     bool is_complete_;
     bool is_moving_;
     bool show_path_visualization_;
 
-    // **PATH DATA**
+    // Path data
     std::vector<Position> calculated_path_;
     int current_step_;
     Position target_position_;
 
-    // **GAME REFERENCES**
+    // Game references
     PlayerChar* player_character_;
     Map<>* game_map_;
     Pathfinding* pathfinding_system_;
 
-    // **MOVEMENT TIMING**
+    // Movement timing
     float movement_timer_;
     float movement_delay_; // Time between steps (in seconds)
 
-    // **STATUS TRACKING**
+    // Status tracking
     std::string status_message_;
     int items_picked_up_;
     int items_equipped_;
     int total_items_found_;
 
-    // **PRIVATE METHODS**
+    // private methods
     void ProcessCurrentStep();
     void MoveToNextStep();
     void HandleItemPickup(const Position& pos);
@@ -77,7 +77,7 @@ private:
     void UpdateStatusMessage();
     void CompleteTraversal();
 
-    // **VISUALIZATION HELPERS**
+    // Visualization helpers
     Color GetPathColor(int step_index) const;
     void RenderPathStep(int x, int y, int tile_size, int step_index, bool is_current) const;
 };

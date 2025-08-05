@@ -207,7 +207,7 @@ void AutomatedTraversal::HandleAutoEquipment() {
 
         // Check weapons
         if (const WeaponItem* weapon = dynamic_cast<const WeaponItem*>(item)) {
-            // **FIXED** - Use internal inventory access to check equipped weapon
+            // Use internal inventory access to check equipped weapon
             bool should_equip = true;
             int current_weapon_strength = 0;
 

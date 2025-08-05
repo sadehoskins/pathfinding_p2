@@ -7,7 +7,7 @@
 
 class ConsumableItem : public ItemBase {
 public:
-    // Effect type enum (helper enum - allowed in same file)
+    // Effect type enum (helper enum)
     enum class EffectType {
         HEALING,
         DAMAGE,

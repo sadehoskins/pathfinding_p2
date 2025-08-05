@@ -5,8 +5,8 @@
 #include <memory>
 
 // ******************** ITEM RARITY ENUM ********************
-// (Helper enum - allowed in same file per project rules)
 
+// (Helper enum)
 enum class ItemRarity {
     COMMON,
     UNCOMMON,

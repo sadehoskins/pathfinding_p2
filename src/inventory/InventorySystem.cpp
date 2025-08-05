@@ -79,7 +79,7 @@ void InventorySystem::HandleInput() {
             auto item = player_inventory_->RemoveItem(selected_slot_);
             if (item) {
                 SetStatusMessage("Dropped: " + item->GetName(), 2.0f);
-                // In a real game, you'd place the item on the ground
+                // Placing item on ground placeholder
             } else {
                 SetStatusMessage("No item to drop", 1.0f);
             }
@@ -95,13 +95,12 @@ void InventorySystem::Update() {
 
 void InventorySystem::Render(int screen_width, int screen_height) {
     if (!is_inventory_open_) {
-        // **IMPROVED** Use new minimal UI
         RenderMinimalUI(screen_width, screen_height);
         RenderStatusMessage(screen_width, screen_height);
         return;
     }
 
-    // Render full inventory window (already improved above)
+    // Render full inventory window
     RenderInventoryWindow(screen_width, screen_height);
     RenderStatusMessage(screen_width, screen_height);
 }
@@ -253,20 +252,20 @@ void InventorySystem::RenderInventoryWindow(int screen_width, int screen_height)
     // Controls help
     int help_y = window_y + window_height - 140;
 
-    // **IMPROVED** Better contrast for control text
+    // Better contrast for control text
     DrawRectangle(window_x + 10, help_y - 5, window_width - 20, 130, ColorAlpha(BLACK, 0.8f));
     DrawRectangleLines(window_x + 10, help_y - 5, window_width - 20, 130, GRAY);
 
     DrawText("CONTROLS:", window_x + 20, help_y + 5, 16, WHITE);
 
-    // **IMPROVED** Better organized and more readable control text
+    // Better organized and more readable control text
     DrawText("Navigate: Arrow Keys  |  Examine: ENTER  |  Drop: D",
              window_x + 20, help_y + 30, 14, LIGHTGRAY);
     DrawText("Toggle Mode: E  |  Close: I or ESC",
              window_x + 20, help_y + 50, 14, LIGHTGRAY);
 
     if (is_equip_mode_) {
-        // **IMPROVED** Better contrast for equip mode text
+        // Better contrast for equip mode text
         DrawText("EQUIP TO SLOTS:", window_x + 20, help_y + 75, 14, YELLOW);
         DrawText("1 = Weapon  |  2 = Armor  |  3 = Accessory",
                  window_x + 20, help_y + 95, 13, ColorAlpha(YELLOW, 0.9f));
@@ -279,7 +278,7 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
     DrawText("EQUIPMENT:", start_x, start_y, 18, WHITE);
 
     int slot_size = 80;
-    int slot_spacing = 120; // **INCREASED** spacing to prevent overlap
+    int slot_spacing = 120; // Increased spacing to prevent overlap
 
     // Equipment slot names
     const char* slot_names[] = {"WEAPON", "ARMOR", "ACCESSORY"};
@@ -295,14 +294,14 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
         DrawRectangle(slot_x, slot_y, slot_size, slot_size, slot_color);
         DrawRectangleLines(slot_x, slot_y, slot_size, slot_size, WHITE);
 
-        // **IMPROVED** Draw slot label with better positioning
+        // Draw slot label
         int label_width = MeasureText(slot_names[i], 12); // **SMALLER** font to prevent overlap
         DrawText(slot_names[i], slot_x + (slot_size - label_width) / 2, slot_y - 20, 12, WHITE);
 
         // Draw equipped item
         const ItemBase* equipped = player_inventory_->GetEquippedItem(slot_types[i]);
         if (equipped) {
-            // **UPDATED** Use TextureManager directly
+            // Use TextureManager directly
             if (TextureManager::AreTexturesLoaded()) {
                 Texture2D item_texture = TextureManager::GetItemTexture(equipped->GetName());
                 if (item_texture.id != 0) {
@@ -352,7 +351,7 @@ void InventorySystem::RenderEquipmentSlots(int start_x, int start_y) {
             }
 
             if (str_bonus > 0) {
-                // **IMPROVED** Better positioning for strength bonus
+                // Better positioning for strength bonus
                 DrawRectangle(slot_x + 2, slot_y + slot_size - 16, 40, 14, ColorAlpha(BLACK, 0.7f));
                 DrawText(TextFormat("+%d STR", str_bonus), slot_x + 4, slot_y + slot_size - 15, 10, GREEN);
             }
@@ -401,7 +400,7 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
 
         // Draw item if present
         if (item) {
-            // **NEW** Try to render item texture first
+            // Try to render item texture first
             if (TextureManager::AreTexturesLoaded()) {
                 Texture2D item_texture = TextureManager::GetItemTexture(item->GetName());
                 if (item_texture.id != 0) {
@@ -460,7 +459,7 @@ void InventorySystem::RenderInventorySlots(int start_x, int start_y) {
                 type_color = YELLOW;
             }
 
-            // **IMPROVED** Better positioning for type indicator
+            // Better positioning for type indicator
             DrawRectangle(slot_x + 2, slot_y + slot_size - 16, 12, 12, ColorAlpha(BLACK, 0.7f));
             DrawText(TextFormat("%c", type_char), slot_x + 4, slot_y + slot_size - 14, 10, type_color);
         }
@@ -567,11 +566,7 @@ void InventorySystem::UpdateStatusMessage() {
 }
 // ******************** ADDITIONAL UI IMPROVEMENTS ********************
 
-// Add this method to InventorySystem class (in both .h and .cpp):
-
 void InventorySystem::RenderMinimalUI(int screen_width, int screen_height) {
-    // **IMPROVED** When inventory is closed, show better UI
-
     // Equipment strength bonus with better styling
     int strength_bonus = GetTotalStrengthBonus();
     if (strength_bonus > 0) {
@@ -697,7 +692,7 @@ int InventorySystem::GetUsedInventorySlots() const {
 
     return player_inventory_->GetUsedSlots();
 }
-// ******************** TASK 3A - INVENTORY SORTING ALGORITHMS ********************
+// ******************** INVENTORY SORTING ALGORITHMS ********************
 
 void InventorySystem::SortByWeight(bool ascending) {
     if (!player_inventory_) {
@@ -722,7 +717,7 @@ void InventorySystem::SortByWeight(bool ascending) {
         }
     }
 
-    // **BUBBLE SORT** by weight (following project rules: reusable, decoupled)
+    // Sort by weight
     for (size_t i = 0; i < items_to_sort.size(); ++i) {
         for (size_t j = 0; j < items_to_sort.size() - 1 - i; ++j) {
             float weight1 = items_to_sort[j].second->GetWeight();
@@ -772,7 +767,7 @@ void InventorySystem::SortByName(bool ascending) {
         }
     }
 
-    // **SELECTION SORT** by name (different algorithm for variety)
+    // Sort by name
     for (size_t i = 0; i < items_to_sort.size(); ++i) {
         size_t target_index = i;
 
@@ -829,7 +824,7 @@ void InventorySystem::SortByValue(bool ascending) {
         }
     }
 
-    // **INSERTION SORT** by value (third different algorithm)
+    // Sort by value
     for (size_t i = 1; i < items_to_sort.size(); ++i) {
         auto current_item = std::move(items_to_sort[i]);
         int current_value = current_item.second->GetValue();
@@ -884,7 +879,7 @@ void InventorySystem::SortByType(bool ascending) {
         }
     }
 
-    // **BUBBLE SORT** by type description (reusing algorithm but different comparison)
+    // Sort by type description
     for (size_t i = 0; i < items_to_sort.size(); ++i) {
         for (size_t j = 0; j < items_to_sort.size() - 1 - i; ++j) {
             const std::string& type1 = items_to_sort[j].second->GetTypeDescription();
@@ -947,7 +942,7 @@ void InventorySystem::GenerateTestInventory() {
     // Create varied items to demonstrate sorting (15 items total)
     std::vector<std::unique_ptr<ItemBase>> test_items;
 
-    // **VARIED WEIGHTS** - Different items with different weights
+    //Different items with different weights
     test_items.push_back(std::make_unique<CurrencyKittyCoin>(10));        // 0.1kg, 1 coin
     test_items.push_back(std::make_unique<ConsumablesHealthPotion>());     // 0.5kg, 50 coins
     test_items.push_back(std::make_unique<AccessoryLuckyPaw>());           // 0.3kg, 90 coins
@@ -959,7 +954,7 @@ void InventorySystem::GenerateTestInventory() {
     test_items.push_back(std::make_unique<ArmorElderWings>());             // 2.8kg, 250 coins
     test_items.push_back(std::make_unique<GemstoneBlue>());                // 0.3kg, 200 coins
 
-    // **MORE VARIED ITEMS** - Add duplicates with different amounts for variety
+    // Add duplicates with different amounts for variety
     test_items.push_back(std::make_unique<CurrencyKittyCoin>(5));          // 0.1kg, 1 coin
     test_items.push_back(std::make_unique<CurrencyKittyCoin>(25));         // 0.1kg, 1 coin
     test_items.push_back(std::make_unique<ConsumablesHealthPotion>());     // 0.5kg, 50 coins
@@ -991,7 +986,7 @@ void InventorySystem::DemonstrateAllSorting() {
     }
 
     std::cout << "\n" << std::string(60, '=') << std::endl;
-    std::cout << "           TASK 3B - SORTING ALGORITHMS DEMONSTRATION" << std::endl;
+    std::cout << "           SORTING ALGORITHMS DEMONSTRATION" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
 
     std::cout << "\nDemonstrating ALL sorting functions with varied inventory..." << std::endl;
@@ -1003,7 +998,7 @@ void InventorySystem::DemonstrateAllSorting() {
     std::cout << "\nPress ENTER to start sorting demonstrations...";
     std::cin.get(); // Wait for user input
 
-    // **1. DEMONSTRATE WEIGHT SORTING**
+    // Demonstrate weight sorting
     std::cout << "\n" << std::string(50, '-') << std::endl;
     std::cout << "DEMONSTRATION 1/4: SORTING BY WEIGHT" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
@@ -1011,7 +1006,7 @@ void InventorySystem::DemonstrateAllSorting() {
     std::cout << "\nPress ENTER to continue to next sorting demo...";
     std::cin.get();
 
-    // **2. DEMONSTRATE NAME SORTING**
+    // Demonstrate name sorting
     std::cout << "\n" << std::string(50, '-') << std::endl;
     std::cout << "DEMONSTRATION 2/4: SORTING BY NAME (ALPHABETICAL)" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
@@ -1019,7 +1014,7 @@ void InventorySystem::DemonstrateAllSorting() {
     std::cout << "\nPress ENTER to continue to next sorting demo...";
     std::cin.get();
 
-    // **3. DEMONSTRATE VALUE SORTING**
+    // Demonstrate value sorting
     std::cout << "\n" << std::string(50, '-') << std::endl;
     std::cout << "DEMONSTRATION 3/4: SORTING BY VALUE (PRICE)" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
@@ -1027,7 +1022,7 @@ void InventorySystem::DemonstrateAllSorting() {
     std::cout << "\nPress ENTER to continue to final sorting demo...";
     std::cin.get();
 
-    // **4. DEMONSTRATE TYPE SORTING**
+    // Demonstrate type sorting
     std::cout << "\n" << std::string(50, '-') << std::endl;
     std::cout << "DEMONSTRATION 4/4: SORTING BY TYPE" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
@@ -1035,7 +1030,7 @@ void InventorySystem::DemonstrateAllSorting() {
     std::cout << "\nPress ENTER to finish demonstration...";
     std::cin.get();
 
-    // **FINAL SUMMARY**
+    // Final summary
     std::cout << "\n" << std::string(60, '=') << std::endl;
     std::cout << "           SORTING DEMONSTRATION COMPLETE!" << std::endl;
     std::cout << std::string(60, '=') << std::endl;

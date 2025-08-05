@@ -29,7 +29,7 @@ PlayerChar::~PlayerChar() {
     std::cout << "PlayerChar destroyed." << std::endl;
 }
 
-// ******************** INTERFACE FOR TRAVERSING THE MAP (required) ********************
+// ******************** INTERFACE FOR TRAVERSING THE MAP  ********************
 
 bool PlayerChar::CanMoveTo(const Position& new_position) const {
     if (!current_map_) {
@@ -48,7 +48,7 @@ bool PlayerChar::CanMoveTo(const Position& new_position) const {
         return false;
     }
 
-    // **WEIGHT RESTRICTION** - Check if player is overweight
+    // Weight restriction -> Check if player is overweight
     if (IsOverweight()) {
         std::cout << "Cannot move - you are carrying too much weight! Current: "
                   << GetCurrentWeight() << "kg, Max: " << GetMaxCarryWeight() << "kg" << std::endl;
@@ -105,7 +105,7 @@ bool PlayerChar::TryMoveRight() {
     return false;
 }
 
-// ******************** STRENGTH SYSTEM (required) ********************
+// ******************** STRENGTH SYSTEM  ********************
 
 int PlayerChar::GetStrength() const {
     int total = base_strength_;  // Use base class member
@@ -136,7 +136,7 @@ bool PlayerChar::IsOverweight() const {
     return GetCurrentWeight() > GetMaxCarryWeight();
 }
 
-// ******************** INTERFACE FOR PICKING UP AND DROPPING ITEMS (required) ********************
+// ******************** INTERFACE FOR PICKING UP AND DROPPING ITEMS ********************
 
 bool PlayerChar::PickUpItemAt(const Position& pos) {
     if (!current_map_) {
@@ -215,7 +215,7 @@ bool PlayerChar::DropSelectedItem() {
     return false;
 }
 
-// ******************** INTERFACE FOR EQUIPPING ITEMS (required) ********************
+// ******************** INTERFACE FOR EQUIPPING ITEMS ********************
 
 bool PlayerChar::EquipSelectedItem(EquipmentSlotType slot_type) {
     if (!inventory_system_) {
@@ -281,7 +281,7 @@ void PlayerChar::Render(int screen_x, int screen_y, int tile_size) const {
         // Draw border to make character stand out
         DrawRectangleLines(screen_x, screen_y, tile_size, tile_size, BLACK);
     } else {
-        // Fallback rendering - draw colored rectangle with '@' symbol
+        // Fallback rendering -> draw colored rectangle with '@' symbol
         DrawRectangle(screen_x, screen_y, tile_size, tile_size, YELLOW);
         DrawRectangleLines(screen_x, screen_y, tile_size, tile_size, BLACK);
 
@@ -295,7 +295,7 @@ void PlayerChar::Render(int screen_x, int screen_y, int tile_size) const {
                  BLACK);
     }
 
-    // **NEW** Show overweight indicator if carrying too much
+    // Show overweight indicator if carrying too much
     if (IsOverweight()) {
         DrawRectangle(screen_x + tile_size - 8, screen_y, 8, 8, RED);
         DrawText("!", screen_x + tile_size - 6, screen_y + 1, 6, WHITE);
@@ -317,13 +317,12 @@ void PlayerChar::LoadTexture() {
 }
 
 void PlayerChar::UnloadTexture() {
-    // TextureManager handles all texture unloading, no need to unload individual textures
+    // TextureManager handles all texture unloading
     texture_loaded_ = false;
 }
 
 // ******************** UTILITY ********************
-
-// Enhanced PrintStatus method that combines Character info + Player-specific info:
+// Enhanced PrintStatus method that combines character info and player-specific info
 
 void PlayerChar::PrintStatus() const {
     // Call base class status first
@@ -351,8 +350,7 @@ void PlayerChar::PrintStatus() const {
 }
 
 void PlayerChar::Update() {
-    // **PLAYER-SPECIFIC UPDATE LOGIC**
-
+    // Player specific update logic
     // Update inventory system
     if (inventory_system_) {
         inventory_system_->Update();
@@ -360,11 +358,10 @@ void PlayerChar::Update() {
 
     // Check if player is overweight and update status
     if (IsOverweight()) {
-        // Could add visual indicators, sound effects, etc. here in the future
-        // For now, just ensure the overweight state is properly tracked
+        // Add visual indicators, sound effects, etc. here in the future
     }
 
-    // Future player-specific updates can go here:
+    // Future player-specific updates go here:
     // - Health regeneration over time
     // - Status effect updates (poison, buffs, etc.)
     // - Experience/leveling systems

@@ -167,19 +167,16 @@ void TextureManager::LoadCharacterTextures() {
     // Player character
     LoadTextureFromFile("char_player", "assets/graphics/main_character/main_character.png", TextureCategory::CHARACTERS);
 
-    // Future NPCs can be added here
-    // LoadTextureFromFile("char_npc_guard", "assets/graphics/characters/guard.png", TextureCategory::CHARACTERS);
+    // Add future NPCs here
 }
 
 void TextureManager::LoadUITextures() {
     std::cout << "Loading UI textures..." << std::endl;
 
-    // **NEW** Load sparkle texture for hidden items
+    // Load sparkle texture for hidden items
     LoadTextureFromFile("ui_sparkle", "assets/graphics/ui/sparkle.png", TextureCategory::UI);
 
-    // Future UI elements can be added here
-    // LoadTextureFromFile("ui_button", "assets/graphics/ui/button.png", TextureCategory::UI);
-    // LoadTextureFromFile("ui_panel", "assets/graphics/ui/panel.png", TextureCategory::UI);
+    // Add future UI elements here
 }
 
 void TextureManager::LoadTextureFromFile(const std::string& texture_name, const std::string& file_path, TextureCategory category) {

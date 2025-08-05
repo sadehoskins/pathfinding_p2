@@ -1,6 +1,5 @@
 #include "ItemManager.h"
 #include "raylib.h"
-
 #include <iostream>
 #include <algorithm>
 #include <chrono>

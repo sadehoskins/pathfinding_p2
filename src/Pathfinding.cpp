@@ -95,7 +95,7 @@ PathResult Pathfinding::FindPathAStar(const Position& start, const Position& goa
                 continue; // Not a better path
             }
 
-            // Create or update neighbor node
+            // Create the updated neighbor node
             PathNode* neighbor_node;
             auto node_it = all_nodes.find(neighbor_pos);
             if (node_it == all_nodes.end()) {
@@ -423,7 +423,7 @@ void Pathfinding::CompareAlgorithms(const Map<TileContainer>& game_map) const {
 }
 
 // ******************** EXPLICIT TEMPLATE INSTANTIATIONS ********************
-// This tells the compiler to generate the template methods for the specific Map type we use
+// Tells the compiler to generate the template methods for the specific Map type we use
 
 template PathResult Pathfinding::FindPathAStar<std::vector<std::vector<Tile>>>(
         const Position& start, const Position& goal,

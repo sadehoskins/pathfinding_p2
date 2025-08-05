@@ -49,21 +49,21 @@ public:
     // Destructor
     ~Pathfinding();
 
-    // **A* ALGORITHM IMPLEMENTATION**
+    // A* Algorithm Implementation
     template<typename TileContainer>
     PathResult FindPathAStar(const Position& start, const Position& goal,
                              const Map<TileContainer>& game_map);
 
-    // **DIJKSTRA ALGORITHM IMPLEMENTATION** (bonus - for comparison)
+    // Dijkstra algorithm implementation  (bonus -> for comparison)
     template<typename TileContainer>
     PathResult FindPathDijkstra(const Position& start, const Position& goal,
                                 const Map<TileContainer>& game_map);
 
-    // **UTILITY METHODS**
+    // Utility methods
     void PrintPath(const PathResult& result) const;
     void PrintPathDetails(const PathResult& result) const;
 
-    // **DEMONSTRATION METHODS**
+    // Demonstration methods
     template<typename TileContainer>
     void DemoPathfinding(const Map<TileContainer>& game_map) const;
 
@@ -71,21 +71,21 @@ public:
     void CompareAlgorithms(const Map<TileContainer>& game_map) const;
 
 private:
-    // **HEURISTIC FUNCTIONS**
+    // Heuristic functions
     float CalculateHeuristic(const Position& from, const Position& to) const;
     float CalculateDistance(const Position& from, const Position& to) const;
 
-    // **PATH RECONSTRUCTION**
+    // Path reconstruction
     std::vector<Position> ReconstructPath(PathNode* goal_node) const;
 
-    // **NEIGHBOR HANDLING**
+    // Neighbor handling
     template<typename TileContainer>
     std::vector<Position> GetNeighbors(const Position& pos, const Map<TileContainer>& game_map) const;
 
     template<typename TileContainer>
     bool IsValidMove(const Position& pos, const Map<TileContainer>& game_map) const;
 
-    // **UTILITY HELPERS**
+    // Utility helpers
     bool PositionsEqual(const Position& a, const Position& b) const;
     std::string PositionToString(const Position& pos) const;
 };

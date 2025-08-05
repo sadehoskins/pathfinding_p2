@@ -2,12 +2,6 @@
 #include "TextureManager.h"
 #include <iostream>
 
-// ******************** STATIC MEMBER DEFINITIONS ********************
-
-
-
-
-
 // ******************** UTILITY FUNCTIONS ********************
 
 bool Tile::IsBlockedType(TileType type) {
@@ -127,7 +121,7 @@ void Tile::CloseTreasureChest() {
 // ******************** RENDERING ********************
 
 void Tile::Render(int screen_x, int screen_y, int tile_size) const {
-    if (TextureManager::AreTexturesLoaded()) {  // **UPDATED** Use TextureManager
+    if (TextureManager::AreTexturesLoaded()) {  // Use TextureManager
         // Use texture if available and loaded
         Texture2D texture = GetTextureForType(type_);
         if (texture.id != 0) {

@@ -21,7 +21,7 @@ enum class TileType {
     TRAVERSABLE_STONE,
     TRAVERSABLE_GRASS,
 
-    // **NEW** Treasure chest variants (traversable)
+    // Treasure chest variants (traversable)
     TREASURE_CHEST_CLOSED,
     TREASURE_CHEST_OPENED
 };
@@ -78,7 +78,7 @@ public:
     void SetPosition(const Position& pos);
     void SetPosition(int x, int y);
 
-    // **NEW** Treasure chest operations
+    // Treasure chest operations
     void OpenTreasureChest();
     void CloseTreasureChest();
 

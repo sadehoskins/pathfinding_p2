@@ -18,7 +18,7 @@ public:
     // Destructor
     ~PlayerChar();
 
-    // **INTERFACE FOR TRAVERSING THE MAP** (required)
+    // Interface for traversing the map
     bool CanMoveTo(const Position& new_position) const override;
     void MoveTo(const Position& new_position) override;
 
@@ -29,26 +29,26 @@ public:
     bool TryMoveRight();
     void SetMap(Map<>* map) { current_map_ = map; }
 
-    // **INVENTORY INTEGRATION** (required - 10 item slots + equipment)
+    // Inventory integration
     InventorySystem& GetInventorySystem() { return *inventory_system_; }
     const InventorySystem& GetInventorySystem() const { return *inventory_system_; }
 
-    // **STRENGTH SYSTEM** (required) - Override base class methods
+    // Strength system
     int GetStrength() const override; // Base + equipment bonuses
     int GetTotalStrength() const { return GetStrength(); } // Alias for compatibility
     float GetMaxCarryWeight() const; // Based on total strength
     float GetCurrentWeight() const;
     bool IsOverweight() const;
 
-    // **INTERFACE FOR PICKING UP AND DROPPING ITEMS** (required)
+    // Interface for picking up and dropping items
     bool PickUpItemAt(const Position& pos);
     bool DropSelectedItem();
 
-    // **INTERFACE FOR EQUIPPING ITEMS** (required)
+    // Interface for equipping items
     bool EquipSelectedItem(EquipmentSlotType slot_type);
     bool UnequipItem(EquipmentSlotType slot_type);
 
-    // **ENHANCED PLAYER METHODS** (using base class health system)
+    // Player methods -> use base class health system
     void SetName(const std::string& name) override { Character::SetName(name); }
     void PrintStatus() const override; // Enhanced version showing inventory info
     void Update() override; // Player-specific update logic
@@ -62,7 +62,7 @@ public:
     void CheckItemsAtCurrentPosition() const;
 
 private:
-    // **INVENTORY (required - 10 item slots + equipment slots)**
+    // Inventory
     std::unique_ptr<InventorySystem> inventory_system_;
 
     // Map reference

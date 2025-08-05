@@ -7,7 +7,7 @@
 
 int main() {
     try {
-        // Create and run the game
+        // Create and run game
         Game game;
         game.Run();
 

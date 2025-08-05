@@ -7,7 +7,7 @@
 
 class AccessoryItem : public ItemBase {
 public:
-    // Special effect types for accessories (helper enum - allowed in same file)
+    // Special effect types for accessories (helper enum)
     enum class SpecialEffectType {
         MAGIC_RESISTANCE,
         CRITICAL_CHANCE,

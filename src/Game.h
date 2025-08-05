@@ -52,7 +52,7 @@ public:
     // Utility
     bool ShouldClose() const;
 
-    // **NEW** Treasure chest interaction methods
+    // Treasure chest interaction methods
     void DemoTreasureChestInteraction();
 
 private:

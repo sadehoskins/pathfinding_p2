@@ -13,7 +13,7 @@ ConsumableItem::ConsumableItem(const std::string& name, const std::string& descr
 void ConsumableItem::Use() {
     std::cout << "Using " << name_ << " - " << GetEffectName()
               << " effect: " << effect_value_ << std::endl;
-    // Effect application logic would go here in future tasks
+    // Effect application logic for future tasks
 }
 
 std::string ConsumableItem::GetEffectName() const {

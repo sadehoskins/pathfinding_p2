@@ -84,7 +84,7 @@ void Game::HandleInput() {
     // Handle fullscreen toggle
     HandleFullscreenToggle();
 
-    // **NEW** Handle inventory system input first (it manages its own state)
+    // Handle inventory system input first (manages its own state)
     if (inventory_system_) {
         inventory_system_->HandleInput();
 
@@ -109,7 +109,7 @@ void Game::HandleInput() {
                 SetGameState(GameState::PAUSED);
             }
 
-            // **TASK 3B - SORTING CONTROLS** (moved outside inventory check)
+            // Sorting controls (moved outside inventory check)
             if (IsKeyPressed(KEY_ONE)) {
                 if (inventory_system_) {
                     std::cout << "\n🔸 Sorting inventory by WEIGHT..." << std::endl;
@@ -125,7 +125,7 @@ void Game::HandleInput() {
             if (IsKeyPressed(KEY_THREE)) {
                 if (inventory_system_) {
                     std::cout << "\n🔸 Sorting inventory by VALUE..." << std::endl;
-                    inventory_system_->SortByValue(false); // High to low is more interesting
+                    inventory_system_->SortByValue(false); // High to low
                 }
             }
             if (IsKeyPressed(KEY_FOUR)) {
@@ -134,7 +134,7 @@ void Game::HandleInput() {
                     inventory_system_->SortByType(true);
                 }
             }
-            // **TASK 3B - DEMO CONTROLS**
+            // Demo controls
             if (IsKeyPressed(KEY_SIX)) {
                 if (inventory_system_) {
                     std::cout << "\n🎯 Generating test inventory for sorting demo..." << std::endl;
@@ -177,7 +177,7 @@ void Game::HandleInput() {
                 }
             }
 
-            // **TASK 5A - AUTOMATED TRAVERSAL CONTROLS**
+            // Automated traversal controls
             if (IsKeyPressed(KEY_A) && !automated_traversal_->IsActive()) {
                 if (automated_traversal_ && pathfinding_system_ && game_map_ && player_character_) {
                     std::cout << "\n🤖 Starting automated traversal to end position..." << std::endl;
@@ -228,7 +228,7 @@ void Game::HandleInput() {
                     moved = player_character_->TryMoveRight();
                 }
 
-                // **NEW** Pick up items at current position
+                // Pick up items at current position
                 if (IsKeyPressed(KEY_F)) {
                     player_character_->PickUpItemAt(player_character_->GetPosition());
                 }
@@ -249,7 +249,7 @@ void Game::HandleInput() {
                     player_character_->CheckItemsAtCurrentPosition();
                 }
 
-                // **NEW** Check current position for items
+                // Check current position for items
                 if (IsKeyPressed(KEY_E)) {
                     std::cout << "\n=== CHECKING CURRENT POSITION ===" << std::endl;
                     player_character_->CheckItemsAtCurrentPosition();
@@ -261,7 +261,7 @@ void Game::HandleInput() {
                 // Regenerate map with clustering
                 game_map_->GenerateTerrainWithClustering();
 
-                // **NEW** Respawn player at new start position
+                // Respawn player at new start position
                 if (player_character_) {
                     Position new_start = game_map_->GetStartPosition();
                     player_character_->SetPosition(new_start);
@@ -281,7 +281,7 @@ void Game::HandleInput() {
                 std::cout << "Textures loaded: " << (TextureManager::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
             }
             if (IsKeyPressed(KEY_I)) {
-                // Show item information - DEBUG VERSION
+                // Show item information *DEBUG*
                 std::cout << "\n=== DEBUG ITEM INFO ===" << std::endl;
                 std::cout << "Total items in manager: " << game_map_->GetItemManager().GetTotalItemCount() << std::endl;
                 std::cout << "Treasure chest positions: " << ItemManager::GetTreasureChestPositions().size() << std::endl;
@@ -293,7 +293,7 @@ void Game::HandleInput() {
                 }
                 std::cout << "=======================" << std::endl;
             }
-            // Treasure chest interaction (spacebar to open nearby chests) uses inventory system
+            // Treasure chest interaction (spacebar to open nearby chests -> uses inventory system
             if (IsKeyPressed(KEY_SPACE)) {
                 HandleTreasureChestInteraction();
             }
@@ -371,7 +371,7 @@ void Game::InitializeGameSystems() {
     // Initialize map with default size (15x15)
     game_map_ = std::make_unique<Map<>>(15, 15);
 
-    // **NEW** Create player character at start position
+    // Create player character at start position
     Position start_pos = game_map_->GetStartPosition();
     player_character_ = std::make_unique<PlayerChar>(start_pos, 10); // 10 base strength
     player_character_->SetMap(game_map_.get()); // Give player reference to map
@@ -396,20 +396,18 @@ void Game::InitializeGameSystems() {
     game_map_->PrintMapInfo();
     game_map_->GetItemManager().PrintItemsInfo();
     std::cout << "===================" << std::endl;
-
-
 }
 
 void Game::UpdateGameLogic() {
     // Update game systems based on current state
     switch (current_state_) {
         case GameState::PLAYING:
-            // **NEW** automated traversal system
+            // Automated traversal system
             if (automated_traversal_) {
                 automated_traversal_->Update();
             }
         case GameState::INVENTORY:
-            // **NEW** Update inventory system
+            // Update inventory system
             if (inventory_system_) {
                 inventory_system_->Update();
             }
@@ -469,7 +467,7 @@ void Game::RenderGame() {
                 // Render the map
                 game_map_->Render(offset_x, offset_y, tile_size_);
 
-                // **NEW** Render player character
+                // Render player character
                 if (player_character_) {
                     Position player_pos = player_character_->GetPosition();
                     int player_screen_x = offset_x + (player_pos.x * tile_size_);
@@ -487,7 +485,7 @@ void Game::RenderGame() {
                 DrawText("t = Treasure Chest (Closed)", 10, 135, 16, GOLD);
                 DrawText("O = Treasure Chest (Opened)", 10, 155, 16, ORANGE);
 
-                // **NEW** Player info
+                // Player info
                 if (player_character_) {
                     Position player_pos = player_character_->GetPosition();
                     DrawText(TextFormat("Player: (%d,%d)", player_pos.x, player_pos.y),
@@ -501,13 +499,13 @@ void Game::RenderGame() {
                              player_character_->IsOverweight() ? RED : WHITE);
                 }
 
-                // **NEW** Item system info
+                // Item system info
                 DrawText(TextFormat("Items: %d", game_map_->GetItemManager().GetTotalItemCount()),
                          10, 185, 16, PURPLE);
                 DrawText(TextFormat("Chests: %d", (int)ItemManager::GetTreasureChestPositions().size()),
                          10, 205, 16, GOLD);
 
-                // **NEW** Inventory info
+                // Inventory info
                 if (inventory_system_) {
                     int strength_bonus = inventory_system_->GetTotalStrengthBonus();
                     if (strength_bonus > 0) {
@@ -517,12 +515,12 @@ void Game::RenderGame() {
                 }
             }
 
-            // **NEW** Render inventory system (minimal UI when closed)
+            // Render inventory system (minimal UI when closed)
             if (inventory_system_) {
                 inventory_system_->Render(kScreenWidth, kScreenHeight);
             }
 
-            // **NEW** Show automated traversal status
+            // Show automated traversal status
             if (automated_traversal_->IsActive()) {
                 std::string status = automated_traversal_->GetStatusMessage();
                 DrawText(status.c_str(), 10, 300, 18,
@@ -549,7 +547,7 @@ void Game::RenderGame() {
                 DrawRectangle(0, 0, kScreenWidth, kScreenHeight, ColorAlpha(BLACK, 0.7f));
             }
 
-            // **NEW** Render full inventory system
+            // Render full inventory system
             if (inventory_system_) {
                 inventory_system_->Render(kScreenWidth, kScreenHeight);
             }
@@ -613,7 +611,7 @@ void Game::CleanupResources() {
     automated_traversal_.reset();
 }
 
-// ******************** NEW METHODS FOR TASK 1C ********************
+// ******************** NEW METHODS DEMO CHEST ********************
 
 void Game::DemoTreasureChestInteraction() {
     // This method is now replaced by HandleTreasureChestInteraction()
@@ -634,7 +632,7 @@ void Game::HandleTreasureChestInteraction() {
             std::cout << "\n=== OPENING TREASURE CHEST ===" << std::endl;
             std::cout << "Opening chest at position (" << chest_pos.x << ", " << chest_pos.y << ")" << std::endl;
 
-            // **NEW** Use inventory system to handle the item
+            // Use inventory system to handle the item
             bool success = inventory_system_->OpenTreasureChest(chest_pos, game_map_->GetItemManager());
 
             if (success) {
@@ -654,7 +652,7 @@ void Game::HandleTreasureChestInteraction() {
 }
 
 
-// Optional/Delete later: Add this method for testing
+/*/ Delete later: For testing/
 void Game::DemoInventoryIntegration() {
     if (!inventory_system_) return;
 
@@ -671,5 +669,5 @@ void Game::DemoInventoryIntegration() {
     std::cout << "Total equipment strength bonus: +" << inventory_system_->GetTotalStrengthBonus() << std::endl;
     std::cout << "Press 'I' in-game to open inventory!" << std::endl;
     std::cout << "===================================" << std::endl;
-}
+}*/
 

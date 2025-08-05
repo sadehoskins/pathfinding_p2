@@ -68,10 +68,10 @@ public:
     void SortByValue(bool ascending = true);
     void SortByType(bool ascending = true);  // Bonus: sort by item type
 
-    // **NEW** Helper method for sorting display
+    // Helper method for sorting display
     void PrintInventoryItems() const;
 
-    // **TASK 3B** Sorting demonstration methods
+    // Sorting demonstration methods
     void GenerateTestInventory();
     void DemonstrateAllSorting();
     void RunSortingDemo();
