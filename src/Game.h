@@ -7,6 +7,7 @@
 #include "items/ItemManager.h"
 #include "inventory/InventorySystem.h"
 #include "PlayerChar.h"
+#include "Pathfinding.h"
 #include <memory>
 
 // ******************** GAME STATE ENUM ********************
@@ -65,6 +66,9 @@ private:
 
     // Inventory system
     std::unique_ptr<InventorySystem> inventory_system_;
+
+    // Pathfinding system
+    std::unique_ptr<Pathfinding> pathfinding_system_;
 
     // Rendering properties
     RenderTexture2D canvas_;

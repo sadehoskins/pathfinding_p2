@@ -147,8 +147,8 @@ void TextureManager::LoadItemTextures() {
     LoadTextureFromFile("item_Elder Wings", "assets/graphics/items/armor/armor_elder_wings.png", TextureCategory::ITEMS);
 
     // Accessories
-    LoadTextureFromFile("item_Lucky Paw", "assets/graphics/items/accessories/accessory_lucky_paw.png", TextureCategory::ITEMS);
-    LoadTextureFromFile("item_Claw Necklace", "assets/graphics/items/accessories/accessory_claw_necklace.png", TextureCategory::ITEMS);
+    LoadTextureFromFile("item_Lucky Paw", "assets/graphics/items/accessory/accessory_lucky_paw.png", TextureCategory::ITEMS);
+    LoadTextureFromFile("item_Claw Necklace", "assets/graphics/items/accessory/accessory_claw_necklace.png", TextureCategory::ITEMS);
 
     // Consumables
     LoadTextureFromFile("item_Health Potion", "assets/graphics/items/consumables/health_potion.png", TextureCategory::ITEMS);

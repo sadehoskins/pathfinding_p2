@@ -147,6 +147,35 @@ void Game::HandleInput() {
                     inventory_system_->RunSortingDemo();
                 }
             }
+            // Pathfinding
+            if (IsKeyPressed(KEY_EIGHT)) {
+                if (pathfinding_system_ && game_map_) {
+                    std::cout << "\n🔍 Running pathfinding demonstration..." << std::endl;
+                    pathfinding_system_->DemoPathfinding(*game_map_);
+                }
+            }
+            if (IsKeyPressed(KEY_NINE)) {
+                if (pathfinding_system_ && game_map_) {
+                    std::cout << "\n⚔️ Comparing A* vs Dijkstra algorithms..." << std::endl;
+                    pathfinding_system_->CompareAlgorithms(*game_map_);
+                }
+            }
+            if (IsKeyPressed(KEY_ZERO)) {
+                if (pathfinding_system_ && game_map_ && player_character_) {
+                    std::cout << "\n🎯 Finding path from player to end..." << std::endl;
+                    Position player_pos = player_character_->GetPosition();
+                    Position end_pos = game_map_->GetEndPosition();
+
+                    PathResult result = pathfinding_system_->FindPathAStar(player_pos, end_pos, *game_map_);
+                    pathfinding_system_->PrintPathDetails(result);
+
+                    if (result.path_found) {
+                        std::cout << "Player can reach the end in " << result.path.size() - 1 << " moves!" << std::endl;
+                    } else {
+                        std::cout << "Player cannot reach the end from current position." << std::endl;
+                    }
+                }
+            }
 
             // Player movement
             if (player_character_) {
@@ -314,6 +343,9 @@ void Game::InitializeGameSystems() {
 
     // Initialize inventory system
     inventory_system_ = std::make_unique<InventorySystem>();
+
+    // Initialize pathfinding system
+    pathfinding_system_ = std::make_unique<Pathfinding>();
 
     // Some test items for inventory demonstration
     inventory_system_->AddItemToInventory(std::make_unique<WeaponSword>());
@@ -511,6 +543,9 @@ void Game::CleanupResources() {
 
     // Reset game map
     game_map_.reset();
+
+    // Reset pathfinding
+    pathfinding_system_.reset();
 }
 
 // ******************** NEW METHODS FOR TASK 1C ********************
