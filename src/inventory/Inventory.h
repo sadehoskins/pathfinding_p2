@@ -48,6 +48,25 @@ public:
     void PrintInventory() const;
     void PrintEquipment() const;
 
+    // weight
+    float GetCurrentWeight() const {
+        float total_weight = 0.0f;
+
+        // Add weight from regular inventory items
+        for (int i = 0; i < max_regular_slots_; ++i) {
+            if (regular_items_[i]) {
+                total_weight += regular_items_[i]->GetWeight();
+            }
+        }
+
+        // Add weight from equipped items
+        if (weapon_slot_) total_weight += weapon_slot_->GetWeight();
+        if (armor_slot_) total_weight += armor_slot_->GetWeight();
+        if (accessory_slot_) total_weight += accessory_slot_->GetWeight();
+
+        return total_weight;
+    }
+
 private:
     Container<std::unique_ptr<ItemBase>> regular_items_;
     std::unique_ptr<ItemBase> weapon_slot_;
