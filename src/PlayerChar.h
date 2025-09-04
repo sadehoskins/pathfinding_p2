@@ -4,7 +4,7 @@
 
 #include "Character.h"
 #include "inventory/Inventory.h"
-#include "inventory/InventorySystem.h"
+//#include "inventory/InventorySystem.h"
 #include "Map.h"
 #include <memory>
 
@@ -30,8 +30,14 @@ public:
     void SetMap(Map<>* map) { current_map_ = map; }
 
     // Inventory integration
-    InventorySystem& GetInventorySystem() { return *inventory_system_; }
-    const InventorySystem& GetInventorySystem() const { return *inventory_system_; }
+    //InventorySystem& GetInventorySystem() { return *inventory_system_; }
+    //const InventorySystem& GetInventorySystem() const { return *inventory_system_; }
+    Inventory<std::vector>* GetInventory() {
+        return inventory_.get(); // Return raw pointer to the inventory
+    }
+    const Inventory<std::vector>* GetInventory() const {
+        return inventory_.get();
+    }
 
     // Strength system
     int GetStrength() const override; // Base + equipment bonuses
@@ -63,7 +69,8 @@ public:
 
 private:
     // Inventory
-    std::unique_ptr<InventorySystem> inventory_system_;
+    //std::unique_ptr<InventorySystem> inventory_system_;
+    std::unique_ptr<Inventory<std::vector>> inventory_;
 
     // Map reference
     Map<>* current_map_;

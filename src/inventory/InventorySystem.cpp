@@ -1,23 +1,36 @@
 
 #include "InventorySystem.h"
-
+#include "../PlayerChar.h"
 #include <iostream>
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
-InventorySystem::InventorySystem()
-        : player_inventory_(std::make_unique<Inventory<std::vector>>(10)),
+InventorySystem::InventorySystem(PlayerChar* player)
+        : player_character_(player),
+          player_inventory_(nullptr),
           is_inventory_open_(false),
           is_equip_mode_(false),
           selected_slot_(0),
           status_message_(""),
           status_message_timer_(0.0f) {
 
-    std::cout << "InventorySystem initialized with 10 item slots." << std::endl;
+    // Connect to player's existing inventory
+    if (player_character_) {
+        player_inventory_ = player_character_->GetInventory();
+        if (player_inventory_) {
+            std::cout << "InventorySystem connected to player's inventory successfully." << std::endl;
+        } else {
+            std::cout << "ERROR: Player inventory is null!" << std::endl;
+        }
+    } else {
+        std::cout << "ERROR: Player character is null!" << std::endl;
+    }
+
     SetStatusMessage("Inventory System Ready!", 2.0f);
 }
 
 InventorySystem::~InventorySystem() {
+    // No cleanup needed for raw pointer - PlayerChar owns inventory
     std::cout << "InventorySystem destroyed." << std::endl;
 }
 
@@ -59,14 +72,14 @@ void InventorySystem::HandleInput() {
             // Use/examine selected item
             const ItemBase* item = player_inventory_->GetItem(selected_slot_);
             if (item) {
-                std::cout << "\n=== ITEM DETAILS ===" << std::endl;
+                std::cout << "\n***ITEM DETAILS ***" << std::endl;
                 std::cout << "Name: " << item->GetName() << std::endl;
                 std::cout << "Description: " << item->GetDescription() << std::endl;
                 std::cout << "Type: " << item->GetTypeDescription() << std::endl;
                 std::cout << "Rarity: " << item->GetRarityName() << std::endl;
                 std::cout << "Weight: " << item->GetWeight() << " kg" << std::endl;
                 std::cout << "Value: " << item->GetValue() << " kitty coins" << std::endl;
-                std::cout << "===================" << std::endl;
+                std::cout << "************************" << std::endl;
 
                 SetStatusMessage("Examined: " + item->GetName(), 2.0f);
             } else {
@@ -133,7 +146,10 @@ void InventorySystem::ToggleInventory() {
 // ******************** ITEM MANAGEMENT ********************
 
 bool InventorySystem::AddItemToInventory(std::unique_ptr<ItemBase> item) {
-    if (!item) return false;
+    if (!item || !player_inventory_) {
+        std::cout << "ERROR: Cannot add item - inventory is null!" << std::endl;
+        return false;
+    }
 
     bool success = player_inventory_->AddItem(std::move(item));
     if (success) {
@@ -163,7 +179,7 @@ bool InventorySystem::OpenTreasureChest(const Position& pos, ItemManager& item_m
         std::cout << "Inventory full! Cannot pick up: " << item_name << std::endl;
         SetStatusMessage("Inventory full! Cannot pick up item.", 4.0f);
 
-        // Put item back for now (in real game, might drop on ground)
+        // Put item back for now (later, might drop on ground)
         item_manager.items_.emplace_back(pos, std::move(item), true);
         return false;
     }
@@ -178,7 +194,7 @@ void InventorySystem::HandleEquipInput() {
 }
 
 void InventorySystem::ShowEquipMenu() {
-    std::cout << "\n=== EQUIPMENT MENU ===" << std::endl;
+    std::cout << "\n*** EQUIPMENT MENU ***" << std::endl;
     std::cout << "1. Weapon Slot: ";
     const ItemBase* weapon = player_inventory_->GetEquippedItem(EquipmentSlotType::WEAPON);
     if (weapon) {
@@ -207,7 +223,7 @@ void InventorySystem::ShowEquipMenu() {
     std::cout << std::endl;
 
     std::cout << "Total Strength Bonus: +" << GetTotalStrengthBonus() << std::endl;
-    std::cout << "======================" << std::endl;
+    std::cout << "***********************" << std::endl;
 }
 
 // ******************** UTILITY ********************
@@ -225,8 +241,8 @@ int InventorySystem::GetTotalStrengthBonus() const {
 
 void InventorySystem::RenderInventoryWindow(int screen_width, int screen_height) {
     // Calculate window dimensions
-    int window_width = 750;
-    int window_height = 580;
+    int window_width = 850;
+    int window_height = 650;
     int window_x = (screen_width - window_width) / 2;
     int window_y = (screen_height - window_height) / 2;
 

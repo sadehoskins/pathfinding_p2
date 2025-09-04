@@ -7,9 +7,9 @@
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
 PlayerChar::PlayerChar(const Position& start_position, int base_strength)
-        : Character(start_position, CharacterType::PLAYER)  // **UPDATED** - Use Character constructor
+        : Character(start_position, CharacterType::PLAYER)
         , current_map_(nullptr)
-        , inventory_system_(std::make_unique<InventorySystem>())
+        , inventory_(std::make_unique<Inventory<std::vector>>(10))   // 10 slots
         , texture_loaded_(false) {
 
     // Set base strength using Character's system
@@ -111,13 +111,12 @@ int PlayerChar::GetStrength() const {
     int total = base_strength_;  // Use base class member
 
     // Add equipment bonuses
-    if (inventory_system_) {
-        total += inventory_system_->GetTotalStrengthBonus();
+    if (inventory_) {
+        total += inventory_->GetTotalStrengthBonus();
     }
 
     return total;
 }
-
 
 float PlayerChar::GetMaxCarryWeight() const {
     // Each point of strength allows 2kg of carry weight
@@ -125,11 +124,11 @@ float PlayerChar::GetMaxCarryWeight() const {
 }
 
 float PlayerChar::GetCurrentWeight() const {
-    if (!inventory_system_) {
+    if (!inventory_) {
         return 0.0f;
     }
 
-    return inventory_system_->GetCurrentWeight();
+    return inventory_->GetCurrentWeight();
 }
 
 bool PlayerChar::IsOverweight() const {
@@ -154,14 +153,32 @@ bool PlayerChar::PickUpItemAt(const Position& pos) {
     if (current_map_->HasTreasureChestAt(pos)) {
         const Tile& tile = current_map_->GetTile(pos);
         if (tile.IsClosedTreasureChest()) {
-            // Use inventory system to open treasure chest
-            bool success = inventory_system_->OpenTreasureChest(pos, current_map_->GetItemManager());
-            if (success) {
-                current_map_->OpenTreasureChestAt(pos);
-                std::cout << "Opened treasure chest and picked up item!" << std::endl;
-                return true;
+            // Get item from chest
+            auto item = current_map_->GetItemManager().TakeItemAtPosition(pos, true);
+            if (item) {
+                // Check weight before picking up
+                float item_weight = item->GetWeight();
+                if (GetCurrentWeight() + item_weight > GetMaxCarryWeight()) {
+                    std::cout << "Cannot pick up " << item->GetName()
+                              << " - would exceed weight limit! (" << item_weight << "kg)" << std::endl;
+                    // Put item back in chest
+                    current_map_->GetItemManager().items_.emplace_back(pos, std::move(item), true);
+                    return false;
+                }
+
+                std::string item_name = item->GetName();
+                if (inventory_->AddItem(std::move(item))) {
+                    current_map_->OpenTreasureChestAt(pos);
+                    std::cout << "Opened treasure chest and picked up " << item_name << "!" << std::endl;
+                    return true;
+                } else {
+                    std::cout << "Inventory full! Cannot pick up " << item_name << std::endl;
+                    // Put item back in chest
+                    current_map_->GetItemManager().items_.emplace_back(pos, std::move(item), true);
+                    return false;
+                }
             } else {
-                std::cout << "Could not pick up item from treasure chest." << std::endl;
+                std::cout << "Treasure chest is empty." << std::endl;
                 return false;
             }
         }
@@ -181,11 +198,13 @@ bool PlayerChar::PickUpItemAt(const Position& pos) {
         }
 
         std::string item_name = item->GetName();
-        if (inventory_system_->AddItemToInventory(std::move(item))) {
+        if (inventory_->AddItem(std::move(item))) {
             std::cout << "Picked up " << item_name << "!" << std::endl;
             return true;
         } else {
             std::cout << "Inventory full! Cannot pick up " << item_name << std::endl;
+            // Put item back
+            current_map_->GetItemManager().items_.emplace_back(pos, std::move(item), false);
             return false;
         }
     }
@@ -195,19 +214,23 @@ bool PlayerChar::PickUpItemAt(const Position& pos) {
 }
 
 bool PlayerChar::DropSelectedItem() {
-    if (!inventory_system_) {
+    if (!inventory_) {
         return false;
     }
 
     // Find first item to drop
-    for (int i = 0; i < inventory_system_->GetMaxInventorySlots(); ++i) {
-        const ItemBase* item = inventory_system_->GetItemInSlot(i);
+    for (int i = 0; i < inventory_->GetMaxSlots(); ++i) {
+        const ItemBase* item = inventory_->GetItem(i);
         if (item) {
             std::string item_name = item->GetName();
-            // In a real implementation, you'd place the item on the map at player position
-            std::cout << "Dropped " << item_name << " at position ("
-                      << position_.x << ", " << position_.y << ")" << std::endl;
-            return true;
+            auto dropped_item = inventory_->RemoveItem(i);
+            if (dropped_item) {
+                // In a real implementation, you'd place the item on the map at player position
+                // For now, just remove it from inventory
+                std::cout << "Dropped " << item_name << " at position ("
+                          << position_.x << ", " << position_.y << ")" << std::endl;
+                return true;
+            }
         }
     }
 
@@ -218,13 +241,13 @@ bool PlayerChar::DropSelectedItem() {
 // ******************** INTERFACE FOR EQUIPPING ITEMS ********************
 
 bool PlayerChar::EquipSelectedItem(EquipmentSlotType slot_type) {
-    if (!inventory_system_) {
+    if (!inventory_) {
         return false;
     }
 
     // Find first compatible item in inventory
-    for (int i = 0; i < inventory_system_->GetMaxInventorySlots(); ++i) {
-        const ItemBase* item = inventory_system_->GetItemInSlot(i);
+    for (int i = 0; i < inventory_->GetMaxSlots(); ++i) {
+        const ItemBase* item = inventory_->GetItem(i);
         if (item) {
             // Check if item can be equipped in this slot
             bool can_equip = false;
@@ -241,7 +264,7 @@ bool PlayerChar::EquipSelectedItem(EquipmentSlotType slot_type) {
             }
 
             if (can_equip) {
-                if (inventory_system_->EquipItemInSlot(i, slot_type)) {
+                if (inventory_->EquipItem(i, slot_type)) {
                     std::cout << "Equipped " << item->GetName() << "!" << std::endl;
                     UpdateStrengthFromEquipment();
                     return true;
@@ -255,11 +278,11 @@ bool PlayerChar::EquipSelectedItem(EquipmentSlotType slot_type) {
 }
 
 bool PlayerChar::UnequipItem(EquipmentSlotType slot_type) {
-    if (!inventory_system_) {
+    if (!inventory_) {
         return false;
     }
 
-    if (inventory_system_->UnequipEquipmentSlot(slot_type)) {
+    if (inventory_->UnequipItem(slot_type)) {
         std::cout << "Unequipped item from " << GetEquipmentSlotName(slot_type) << " slot!" << std::endl;
         UpdateStrengthFromEquipment();
         return true;
@@ -322,7 +345,6 @@ void PlayerChar::UnloadTexture() {
 }
 
 // ******************** UTILITY ********************
-// Enhanced PrintStatus method that combines character info and player-specific info
 
 void PlayerChar::PrintStatus() const {
     // Call base class status first
@@ -338,10 +360,10 @@ void PlayerChar::PrintStatus() const {
     }
     std::cout << std::endl;
 
-    if (inventory_system_) {
-        std::cout << "Inventory: " << inventory_system_->GetUsedInventorySlots()
-                  << "/" << inventory_system_->GetMaxInventorySlots() << " slots used" << std::endl;
-        int strength_bonus = inventory_system_->GetTotalStrengthBonus();
+    if (inventory_) {
+        std::cout << "Inventory: " << inventory_->GetUsedSlots()
+                  << "/" << inventory_->GetMaxSlots() << " slots used" << std::endl;
+        int strength_bonus = inventory_->GetTotalStrengthBonus();
         if (strength_bonus > 0) {
             std::cout << "Equipment Strength Bonus: +" << strength_bonus << std::endl;
         }
@@ -351,10 +373,6 @@ void PlayerChar::PrintStatus() const {
 
 void PlayerChar::Update() {
     // Player specific update logic
-    // Update inventory system
-    if (inventory_system_) {
-        inventory_system_->Update();
-    }
 
     // Check if player is overweight and update status
     if (IsOverweight()) {
@@ -406,7 +424,7 @@ void PlayerChar::CheckItemsAtCurrentPosition() const {
     if (current_map_->HasTreasureChestAt(position_)) {
         const Tile& tile = current_map_->GetTile(position_);
         if (tile.IsClosedTreasureChest()) {
-            std::cout << "There is a closed treasure chest here! Press SPACE to open it." << std::endl;
+            std::cout << "There is a closed treasure chest here! Press F to open it." << std::endl;
         } else if (tile.IsOpenTreasureChest()) {
             std::cout << "There is an empty opened treasure chest here." << std::endl;
         }

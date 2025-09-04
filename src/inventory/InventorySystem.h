@@ -15,12 +15,15 @@
 #include <memory>
 #include <string>
 
+// ******************** FORWARD DECLARATION ********************
+class PlayerChar;
+
 // ******************** INVENTORY SYSTEM CLASS ********************
 
 class InventorySystem {
 public:
     // Constructor
-    InventorySystem();
+    InventorySystem(PlayerChar* player);
 
     // Destructor
     ~InventorySystem();
@@ -77,7 +80,8 @@ public:
     void RunSortingDemo();
 
 private:
-    std::unique_ptr<Inventory<std::vector>> player_inventory_;
+    PlayerChar* player_character_;
+    Inventory<std::vector>* player_inventory_; // Raw pointer to player's inventory
     bool is_inventory_open_;
     bool is_equip_mode_;
     int selected_slot_;

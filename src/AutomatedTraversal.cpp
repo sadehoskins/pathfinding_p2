@@ -48,14 +48,14 @@ bool AutomatedTraversal::StartAutomatedTraversal(PlayerChar* player, Map<>* game
     Position start = player_character_->GetPosition();
     Position goal = game_map_->GetEndPosition();
 
-    std::cout << "\n🤖 STARTING AUTOMATED TRAVERSAL 🤖" << std::endl;
+    std::cout << "\n STARTING AUTOMATED TRAVERSAL " << std::endl;
     std::cout << "Calculating optimal path from (" << start.x << ", " << start.y
               << ") to (" << goal.x << ", " << goal.y << ")..." << std::endl;
 
     PathResult result = pathfinding_system_->FindPathAStar(start, goal, *game_map_);
 
     if (!result.path_found) {
-        std::cout << "❌ Cannot find path to destination! Automated traversal failed." << std::endl;
+        std::cout << "Cannot find path to destination! Automated traversal failed." << std::endl;
         status_message_ = "No path to destination";
         return false;
     }
@@ -73,12 +73,12 @@ bool AutomatedTraversal::StartAutomatedTraversal(PlayerChar* player, Map<>* game
     items_equipped_ = 0;
     total_items_found_ = 0;
 
-    std::cout << "✅ Path calculated successfully!" << std::endl;
-    std::cout << "📊 Path length: " << calculated_path_.size() << " steps" << std::endl;
-    std::cout << "💰 Path cost: " << result.total_cost << std::endl;
-    std::cout << "🧠 Nodes explored: " << result.nodes_explored << std::endl;
-    std::cout << "⏱️  Movement delay: " << movement_delay_ << " seconds per step" << std::endl;
-    std::cout << "🎮 Starting automated movement..." << std::endl;
+    std::cout << "Path calculated successfully!" << std::endl;
+    std::cout << "Path length: " << calculated_path_.size() << " steps" << std::endl;
+    std::cout << "Path cost: " << result.total_cost << std::endl;
+    std::cout << "Nodes explored: " << result.nodes_explored << std::endl;
+    std::cout << "⏱Movement delay: " << movement_delay_ << " seconds per step" << std::endl;
+    std::cout << "Starting automated movement..." << std::endl;
 
     UpdateStatusMessage();
     return true;
@@ -100,7 +100,7 @@ void AutomatedTraversal::Update() {
 
 void AutomatedTraversal::Stop() {
     if (is_active_) {
-        std::cout << "\n🛑 Automated traversal stopped by user." << std::endl;
+        std::cout << "\n Automated traversal stopped by user." << std::endl;
     }
 
     is_active_ = false;
@@ -121,7 +121,7 @@ void AutomatedTraversal::ProcessCurrentStep() {
 
     Position next_position = calculated_path_[current_step_];
 
-    std::cout << "🚶 Step " << (current_step_ + 1) << "/" << calculated_path_.size()
+    std::cout << "Step " << (current_step_ + 1) << "/" << calculated_path_.size()
               << ": Moving to (" << next_position.x << ", " << next_position.y << ")" << std::endl;
 
     // Move player to next position
@@ -154,7 +154,7 @@ void AutomatedTraversal::HandleItemPickup(const Position& pos) {
     for (const auto* item_with_pos : items) {
         if (!item_with_pos->is_in_treasure_chest) {
             // Try to pick up hidden item
-            std::cout << "✨ Found hidden item: " << item_with_pos->item->GetName()
+            std::cout << "Found hidden item: " << item_with_pos->item->GetName()
                       << " (weight: " << item_with_pos->item->GetWeight() << "kg)" << std::endl;
 
             // Check if player can carry it
@@ -164,12 +164,12 @@ void AutomatedTraversal::HandleItemPickup(const Position& pos) {
                 if (player_character_->PickUpItemAt(pos)) {
                     items_picked_up_++;
                     total_items_found_++;
-                    std::cout << "📦 Successfully picked up: " << item_with_pos->item->GetName() << std::endl;
+                    std::cout << "Successfully picked up: " << item_with_pos->item->GetName() << std::endl;
                 } else {
-                    std::cout << "❌ Failed to pick up item (inventory full)" << std::endl;
+                    std::cout << "Failed to pick up item (inventory full)" << std::endl;
                 }
             } else {
-                std::cout << "⚖️  Too heavy to pick up (would exceed weight limit)" << std::endl;
+                std::cout << "⚖Too heavy to pick up (would exceed weight limit)" << std::endl;
             }
             break; // Only pick up one item per step
         }
@@ -179,15 +179,15 @@ void AutomatedTraversal::HandleItemPickup(const Position& pos) {
     if (game_map_->HasTreasureChestAt(pos)) {
         const Tile& tile = game_map_->GetTile(pos);
         if (tile.IsClosedTreasureChest()) {
-            std::cout << "🏆 Found treasure chest! Opening..." << std::endl;
+            std::cout << "Found treasure chest! Opening..." << std::endl;
 
             // Try to pick up from treasure chest
             if (player_character_->PickUpItemAt(pos)) {
                 items_picked_up_++;
                 total_items_found_++;
-                std::cout << "💎 Successfully looted treasure chest!" << std::endl;
+                std::cout << "Successfully looted treasure chest!" << std::endl;
             } else {
-                std::cout << "📦 Treasure chest full or inventory full" << std::endl;
+                std::cout << "Treasure chest full or inventory full" << std::endl;
             }
         }
     }
@@ -198,11 +198,11 @@ void AutomatedTraversal::HandleAutoEquipment() {
         return;
     }
 
-    InventorySystem& inventory = player_character_->GetInventorySystem();
+    auto* inventory = player_character_->GetInventory();
 
     // Check each inventory slot for potentially better equipment
-    for (int slot = 0; slot < inventory.GetMaxInventorySlots(); ++slot) {
-        const ItemBase* item = inventory.GetItemInSlot(slot);
+    for (int slot = 0; slot < inventory->GetMaxSlots(); ++slot) {
+        const ItemBase* item = inventory->GetItem(slot);
         if (!item) continue;
 
         // Check weapons
@@ -212,13 +212,13 @@ void AutomatedTraversal::HandleAutoEquipment() {
             int current_weapon_strength = 0;
 
             // Check if there's already a weapon equipped by trying to get current strength bonus
-            int total_strength_before = inventory.GetTotalStrengthBonus();
+            int total_strength_before = inventory->GetTotalStrengthBonus();
 
             // Temporarily check what the strength would be if we equipped this weapon
             // For now, we'll use a simpler approach: just equip if it has better strength than 0
             // or if we can determine no weapon is currently equipped
 
-            if (inventory.EquipItemInSlot(slot, EquipmentSlotType::WEAPON)) {
+            if (inventory->EquipItem(slot, EquipmentSlotType::WEAPON)) {
                 items_equipped_++;
                 std::cout << "⚔️  Auto-equipped weapon: " << weapon->GetName()
                           << " (+" << weapon->GetStrengthBonus() << " STR)" << std::endl;
@@ -226,7 +226,7 @@ void AutomatedTraversal::HandleAutoEquipment() {
         }
             // Check armor
         else if (const ArmorItem* armor = dynamic_cast<const ArmorItem*>(item)) {
-            if (inventory.EquipItemInSlot(slot, EquipmentSlotType::ARMOR)) {
+            if (inventory->EquipItem(slot, EquipmentSlotType::ARMOR)) {
                 items_equipped_++;
                 std::cout << "🛡️  Auto-equipped armor: " << armor->GetName()
                           << " (+" << armor->GetStrengthBonus() << " STR)" << std::endl;
@@ -234,7 +234,7 @@ void AutomatedTraversal::HandleAutoEquipment() {
         }
             // Check accessories
         else if (const AccessoryItem* accessory = dynamic_cast<const AccessoryItem*>(item)) {
-            if (inventory.EquipItemInSlot(slot, EquipmentSlotType::ACCESSORY)) {
+            if (inventory->EquipItem(slot, EquipmentSlotType::ACCESSORY)) {
                 items_equipped_++;
                 std::cout << "💍 Auto-equipped accessory: " << accessory->GetName()
                           << " (+" << accessory->GetStrengthBonus() << " STR)" << std::endl;
@@ -288,8 +288,8 @@ void AutomatedTraversal::CompleteTraversal() {
     is_complete_ = true;
     is_moving_ = false;
 
-    std::cout << "\n🎉 AUTOMATED TRAVERSAL COMPLETE! 🎉" << std::endl;
-    std::cout << "🏁 Successfully reached the destination!" << std::endl;
+    std::cout << "\n AUTOMATED TRAVERSAL COMPLETE!" << std::endl;
+    std::cout << "Successfully reached the destination!" << std::endl;
 
     UpdateStatusMessage();
     ShowFinalSummary();
@@ -364,14 +364,14 @@ void AutomatedTraversal::ShowFinalSummary() const {
     std::cout << "                    JOURNEY COMPLETE!" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
 
-    std::cout << "📊 TRAVERSAL STATISTICS:" << std::endl;
+    std::cout << "RAVERSAL STATISTICS:" << std::endl;
     std::cout << "  • Total steps taken: " << calculated_path_.size() << std::endl;
     std::cout << "  • Items found: " << total_items_found_ << std::endl;
     std::cout << "  • Items picked up: " << items_picked_up_ << std::endl;
     std::cout << "  • Items auto-equipped: " << items_equipped_ << std::endl;
 
     if (player_character_) {
-        std::cout << "\n👤 PLAYER FINAL STATUS:" << std::endl;
+        std::cout << "\nPLAYER FINAL STATUS:" << std::endl;
         std::cout << "  • Final position: (" << player_character_->GetPosition().x
                   << ", " << player_character_->GetPosition().y << ")" << std::endl;
         std::cout << "  • Total strength: " << player_character_->GetTotalStrength() << std::endl;
@@ -380,19 +380,19 @@ void AutomatedTraversal::ShowFinalSummary() const {
                   << player_character_->GetMaxCarryWeight() << " kg" << std::endl;
 
         // Show equipment summary using available methods
-        InventorySystem& inventory = player_character_->GetInventorySystem();
-        std::cout << "\n⚔️  FINAL EQUIPMENT:" << std::endl;
-        std::cout << "  • Total equipment strength bonus: +" << inventory.GetTotalStrengthBonus() << std::endl;
+        auto* inventory = player_character_->GetInventory();
+        std::cout << "\n⚔FINAL EQUIPMENT:" << std::endl;
+        std::cout << "  • Total equipment strength bonus: +" << inventory->GetTotalStrengthBonus() << std::endl;
 
-        std::cout << "\n📦 FINAL INVENTORY STATUS:" << std::endl;
-        std::cout << "  • Slots used: " << inventory.GetUsedInventorySlots()
-                  << "/" << inventory.GetMaxInventorySlots() << std::endl;
+        std::cout << "\nFINAL INVENTORY STATUS:" << std::endl;
+        std::cout << "  • Slots used: " << inventory->GetUsedSlots()
+                  << "/" << inventory->GetMaxSlots() << std::endl;
 
         // Show inventory contents
-        std::cout << "\n📋 FINAL INVENTORY CONTENTS:" << std::endl;
+        std::cout << "\nFINAL INVENTORY CONTENTS:" << std::endl;
         bool has_items = false;
-        for (int i = 0; i < inventory.GetMaxInventorySlots(); ++i) {
-            const ItemBase* item = inventory.GetItemInSlot(i);
+        for (int i = 0; i < inventory->GetMaxSlots(); ++i) {
+            const ItemBase* item = inventory->GetItem(i);
             if (item) {
                 has_items = true;
                 std::cout << "  • Slot " << i << ": " << item->GetName()
@@ -405,12 +405,12 @@ void AutomatedTraversal::ShowFinalSummary() const {
         }
     }
 
-    std::cout << "\n🎯 MISSION STATUS: SUCCESS!" << std::endl;
+    std::cout << "\nMISSION STATUS: SUCCESS!" << std::endl;
     std::cout << "The automated traversal system successfully guided the player" << std::endl;
     std::cout << "from start to end, collecting items and optimizing equipment!" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
 
     // Suggest final actions
-    std::cout << "\n💡 TIP: Press '1', '2', '3', or '4' to sort your final inventory!" << std::endl;
-    std::cout << "💡 TIP: Press 'I' to view your complete inventory in detail!" << std::endl;
+    std::cout << "\nTIP: Press '1', '2', '3', or '4' to sort your final inventory!" << std::endl;
+    std::cout << "TIP: Press 'I' to view your complete inventory in detail!" << std::endl;
 }

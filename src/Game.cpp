@@ -5,8 +5,9 @@
 #include <memory>
 
 // ******************** STATIC CONSTANTS ********************
+// Menu Display Name
 
-const char* Game::kProjectName = "2D Map Generator - Task 1c";
+const char* Game::kProjectName = "2D Kitty Map Generator";
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
@@ -80,6 +81,8 @@ void Game::Render() {
     EndDrawing();
 }
 
+// Hande Gameplay Input
+
 void Game::HandleInput() {
     // Handle fullscreen toggle
     HandleFullscreenToggle();
@@ -112,57 +115,59 @@ void Game::HandleInput() {
             // Sorting controls (moved outside inventory check)
             if (IsKeyPressed(KEY_ONE)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by WEIGHT..." << std::endl;
+                    std::cout << "\n[SORT] Sorting inventory by WEIGHT..." << std::endl;
                     inventory_system_->SortByWeight(true);
                 }
             }
             if (IsKeyPressed(KEY_TWO)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by NAME..." << std::endl;
+                    std::cout << "\n[SORT] Sorting inventory by NAME..." << std::endl;
                     inventory_system_->SortByName(true);
                 }
             }
             if (IsKeyPressed(KEY_THREE)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by VALUE..." << std::endl;
+                    std::cout << "\n[SORT] Sorting inventory by VALUE..." << std::endl;
                     inventory_system_->SortByValue(false); // High to low
                 }
             }
             if (IsKeyPressed(KEY_FOUR)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by TYPE..." << std::endl;
+                    std::cout << "\n[SORT] Sorting inventory by TYPE..." << std::endl;
                     inventory_system_->SortByType(true);
                 }
             }
+
             // Demo controls
             if (IsKeyPressed(KEY_SIX)) {
                 if (inventory_system_) {
-                    std::cout << "\n🎯 Generating test inventory for sorting demo..." << std::endl;
+                    std::cout << "\n[DEMO] Generating test inventory for sorting demo..." << std::endl;
                     inventory_system_->GenerateTestInventory();
                 }
             }
             if (IsKeyPressed(KEY_SEVEN)) {
                 if (inventory_system_) {
-                    std::cout << "\n🎯 Running complete sorting demonstration..." << std::endl;
+                    std::cout << "\n[DEMO] Running complete sorting demonstration..." << std::endl;
                     inventory_system_->RunSortingDemo();
                 }
             }
+
             // Pathfinding
             if (IsKeyPressed(KEY_EIGHT)) {
                 if (pathfinding_system_ && game_map_) {
-                    std::cout << "\n🔍 Running pathfinding demonstration..." << std::endl;
+                    std::cout << "\n[DEMO] Running pathfinding demonstration..." << std::endl;
                     pathfinding_system_->DemoPathfinding(*game_map_);
                 }
             }
             if (IsKeyPressed(KEY_NINE)) {
                 if (pathfinding_system_ && game_map_) {
-                    std::cout << "\n⚔️ Comparing A* vs Dijkstra algorithms..." << std::endl;
+                    std::cout << "\n[DEMO] Comparing A* vs Dijkstra algorithms..." << std::endl;
                     pathfinding_system_->CompareAlgorithms(*game_map_);
                 }
             }
             if (IsKeyPressed(KEY_ZERO)) {
                 if (pathfinding_system_ && game_map_ && player_character_) {
-                    std::cout << "\n🎯 Finding path from player to end..." << std::endl;
+                    std::cout << "\n[DEMO] Finding path from player to end..." << std::endl;
                     Position player_pos = player_character_->GetPosition();
                     Position end_pos = game_map_->GetEndPosition();
 
@@ -177,31 +182,35 @@ void Game::HandleInput() {
                 }
             }
 
-            // Automated traversal controls
-            if (IsKeyPressed(KEY_A) && !automated_traversal_->IsActive()) {
-                if (automated_traversal_ && pathfinding_system_ && game_map_ && player_character_) {
-                    std::cout << "\n🤖 Starting automated traversal to end position..." << std::endl;
-                    bool success = automated_traversal_->StartAutomatedTraversal(
-                            player_character_.get(), game_map_.get(), pathfinding_system_.get());
+            // FIXED: Automated traversal controls - A now toggles start/stop
+            if (IsKeyPressed(KEY_A)) {
+                if (automated_traversal_->IsActive()) {
+                    // Stop automated traversal if it's running
+                    std::cout << "\n[STOP] Stopping automated traversal..." << std::endl;
+                    automated_traversal_->Stop();
+                } else {
+                    // Start automated traversal if it's not running
+                    if (automated_traversal_ && pathfinding_system_ && game_map_ && player_character_) {
+                        std::cout << "\n[START] Starting automated traversal to end position..." << std::endl;
+                        bool success = automated_traversal_->StartAutomatedTraversal(
+                                player_character_.get(), game_map_.get(), pathfinding_system_.get());
 
-                    if (success) {
-                        std::cout << "✅ Automated traversal started successfully!" << std::endl;
-                        std::cout << "🎮 Sit back and watch the AI navigate!" << std::endl;
-                    } else {
-                        std::cout << "❌ Could not start automated traversal." << std::endl;
+                        if (success) {
+                            std::cout << "[SUCCESS] Automated traversal started successfully!" << std::endl;
+                            std::cout << "[INFO] Sit back and watch the kitty AI navigate!" << std::endl;
+                        } else {
+                            std::cout << "[ERROR] Could not start automated traversal." << std::endl;
+                        }
                     }
                 }
             }
-            if (IsKeyPressed(KEY_S) && automated_traversal_->IsActive()) {
-                // Stop automated traversal
-                std::cout << "\n🛑 Stopping automated traversal..." << std::endl;
-                automated_traversal_->Stop();
-            }
+
+            // Other automated traversal controls
             if (IsKeyPressed(KEY_V)) {
                 // Toggle path visualization
                 if (automated_traversal_) {
                     automated_traversal_->TogglePathVisualization();
-                    std::cout << "Path visualization: " <<
+                    std::cout << "[VISUAL] Path visualization: " <<
                               (automated_traversal_->IsPathVisualizationEnabled() ? "ON" : "OFF") << std::endl;
                 }
             }
@@ -212,19 +221,21 @@ void Game::HandleInput() {
                 }
             }
 
-            // Player movement
-            if (player_character_) {
+            // FIXED: Player movement - Only arrow keys, only when NOT automated
+            if (player_character_ && !automated_traversal_->IsActive()) {
                 bool moved = false;
-                if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+
+                // Use ONLY arrow keys for movement (no WASD conflicts)
+                if (IsKeyPressed(KEY_UP)) {
                     moved = player_character_->TryMoveUp();
                 }
-                else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+                else if (IsKeyPressed(KEY_DOWN)) {
                     moved = player_character_->TryMoveDown();
                 }
-                else if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+                else if (IsKeyPressed(KEY_LEFT)) {
                     moved = player_character_->TryMoveLeft();
                 }
-                else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+                else if (IsKeyPressed(KEY_RIGHT)) {
                     moved = player_character_->TryMoveRight();
                 }
 
@@ -240,45 +251,57 @@ void Game::HandleInput() {
                         auto items = game_map_->GetItemManager().GetItemsAtPosition(player_pos);
                         for (const auto* item_with_pos : items) {
                             if (!item_with_pos->is_in_treasure_chest) {
-                                std::cout << "Stepped on sparkle! Found: " << item_with_pos->item->GetName() << std::endl;
+                                std::cout << "[PICKUP] Stepped on sparkle! Found: " << item_with_pos->item->GetName() << std::endl;
                                 player_character_->PickUpItemAt(player_pos);
                                 break; // Pick up one item at a time
                             }
                         }
                     }
                     player_character_->CheckItemsAtCurrentPosition();
+
+                    // Check if reached the end
+                    if (player_character_->GetPosition() == game_map_->GetEndPosition()) {
+                        std::cout << "\n[SUCCESS] Congratulations! You reached the end!" << std::endl;
+                        std::cout << "[HINT] Press R to generate a new map!" << std::endl;
+                    }
                 }
 
                 // Check current position for items
                 if (IsKeyPressed(KEY_E)) {
-                    std::cout << "\n=== CHECKING CURRENT POSITION ===" << std::endl;
+                    std::cout << "\n[CHECK] Checking current position for items..." << std::endl;
                     player_character_->CheckItemsAtCurrentPosition();
-                    std::cout << "=================================" << std::endl;
+                    std::cout << "[CHECK] Position check complete." << std::endl;
                 }
             }
 
+            // Other game controls
             if (IsKeyPressed(KEY_R)) {
                 // Regenerate map with clustering
+                // Stop automated traversal first
+                if (automated_traversal_ && automated_traversal_->IsActive()) {
+                    automated_traversal_->Stop();
+                }
+
                 game_map_->GenerateTerrainWithClustering();
 
                 // Respawn player at new start position
                 if (player_character_) {
                     Position new_start = game_map_->GetStartPosition();
                     player_character_->SetPosition(new_start);
-                    std::cout << "Player respawned at: (" << new_start.x << ", " << new_start.y << ")" << std::endl;
+                    std::cout << "[MAP] Player respawned at: (" << new_start.x << ", " << new_start.y << ")" << std::endl;
                 }
-                std::cout << "Map regenerated with terrain clustering and items!" << std::endl;
+                std::cout << "[MAP] New kitty map generated with terrain clustering and items!" << std::endl;
             }
             if (IsKeyPressed(KEY_C)) {
                 // Print map to console
-                std::cout << "\n=== CURRENT MAP ===" << std::endl;
+                std::cout << "\n=== CURRENT KITTY MAP ===" << std::endl;
                 game_map_->RenderConsole();
                 game_map_->PrintMapInfo();
-                std::cout << "===================" << std::endl;
+                std::cout << "=========================" << std::endl;
             }
             if (IsKeyPressed(KEY_T)) {
                 // Toggle texture info
-                std::cout << "Textures loaded: " << (TextureManager::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
+                std::cout << "[INFO] Textures loaded: " << (TextureManager::AreTexturesLoaded() ? "Yes" : "No") << std::endl;
             }
             if (IsKeyPressed(KEY_I)) {
                 // Show item information *DEBUG*
@@ -291,12 +314,14 @@ void Game::HandleInput() {
                 } else {
                     std::cout << "NO ITEMS GENERATED! Item generation failed." << std::endl;
                 }
-                std::cout << "=======================" << std::endl;
+                std::cout << "======================" << std::endl;
             }
-            // Treasure chest interaction (spacebar to open nearby chests -> uses inventory system
+
+            // Treasure chest interaction (spacebar to open nearby chests)
             if (IsKeyPressed(KEY_SPACE)) {
                 HandleTreasureChestInteraction();
             }
+
             // Inventory status shortcut
             if (IsKeyPressed(KEY_P)) {
                 if (inventory_system_) {
@@ -373,11 +398,11 @@ void Game::InitializeGameSystems() {
 
     // Create player character at start position
     Position start_pos = game_map_->GetStartPosition();
-    player_character_ = std::make_unique<PlayerChar>(start_pos, 10); // 10 base strength
-    player_character_->SetMap(game_map_.get()); // Give player reference to map
+    player_character_ = std::make_unique<PlayerChar>(start_pos, 10);
+    player_character_->SetMap(game_map_.get());
 
-    // Initialize inventory system
-    inventory_system_ = std::make_unique<InventorySystem>();
+    // !!!! Initialize inventory system with player's inventory
+    inventory_system_ = std::make_unique<InventorySystem>(player_character_.get());
 
     // Initialize pathfinding system
     pathfinding_system_ = std::make_unique<Pathfinding>();
@@ -391,11 +416,11 @@ void Game::InitializeGameSystems() {
     inventory_system_->AddItemToInventory(std::make_unique<AccessoryLuckyPaw>());
 
     // Print initial map info
-    std::cout << "\n=== INITIAL MAP ===" << std::endl;
+    std::cout << "\n*** INITIAL MAP ***" << std::endl;
     game_map_->RenderConsole();
     game_map_->PrintMapInfo();
     game_map_->GetItemManager().PrintItemsInfo();
-    std::cout << "===================" << std::endl;
+    std::cout << "**********************" << std::endl;
 }
 
 void Game::UpdateGameLogic() {
@@ -411,7 +436,7 @@ void Game::UpdateGameLogic() {
             if (inventory_system_) {
                 inventory_system_->Update();
             }
-            // Other game logic updates would go here
+            // Other game logic updates would go here (vendor)
             break;
         default:
             break;
@@ -446,12 +471,12 @@ void Game::CalculateRenderScale() {
 }
 
 void Game::RenderGame() {
-    ClearBackground(WHITE);
+    ClearBackground(Color{255, 240, 245, 255}); // Light pink
 
     switch (current_state_) {
         case GameState::MENU:
-            DrawText("2D MAP GENERATOR - TASK 1C", 150, 180, 40, DARKGRAY);
-            DrawText("Features: Treasure Chests & Items!", 200, 230, 20, GRAY);
+            DrawText("2D Kitty Map Generator", 150, 180, 40, DARKGRAY);
+            DrawText("Find Treasures in Kitty Land!", 200, 230, 20, GRAY);
             DrawText("Press ENTER to start", 250, 300, 20, GRAY);
             DrawText("Press ALT+ENTER for fullscreen", 220, 350, 16, LIGHTGRAY);
             break;
@@ -613,9 +638,9 @@ void Game::CleanupResources() {
 
 // ******************** NEW METHODS DEMO CHEST ********************
 
-void Game::DemoTreasureChestInteraction() {
+void Game::DemoTreasureChestInteraction() {     // Delete later!
     // This method is now replaced by HandleTreasureChestInteraction()
-    // Keep for compatibility, but redirect to new method
+    // Keeping for compatibility, but redirecting to new method
     HandleTreasureChestInteraction();
 }
 
@@ -629,7 +654,7 @@ void Game::HandleTreasureChestInteraction() {
         if (game_map_->HasTreasureChestAt(chest_pos) &&
             game_map_->GetTile(chest_pos).IsClosedTreasureChest()) {
 
-            std::cout << "\n=== OPENING TREASURE CHEST ===" << std::endl;
+            std::cout << "\n*** OPENING KITTY TREASURE CHEST ***" << std::endl;
             std::cout << "Opening chest at position (" << chest_pos.x << ", " << chest_pos.y << ")" << std::endl;
 
             // Use inventory system to handle the item
@@ -643,7 +668,7 @@ void Game::HandleTreasureChestInteraction() {
                 std::cout << "Could not add item to inventory (full or no item)" << std::endl;
             }
 
-            std::cout << "===============================" << std::endl;
+            std::cout << "********************************" << std::endl;
             return; // Only open one chest per demo
         }
     }
@@ -652,22 +677,5 @@ void Game::HandleTreasureChestInteraction() {
 }
 
 
-/*/ Delete later: For testing/
-void Game::DemoInventoryIntegration() {
-    if (!inventory_system_) return;
 
-    std::cout << "\n=== INVENTORY INTEGRATION DEMO ===" << std::endl;
-
-    // Add some demo items
-    inventory_system_->AddItemToInventory(std::make_unique<WeaponStaff>());
-    inventory_system_->AddItemToInventory(std::make_unique<ArmorElderWings>());
-    inventory_system_->AddItemToInventory(std::make_unique<AccessoryClawNecklace>());
-
-    // Show current inventory status
-    inventory_system_->PrintInventoryStatus();
-
-    std::cout << "Total equipment strength bonus: +" << inventory_system_->GetTotalStrengthBonus() << std::endl;
-    std::cout << "Press 'I' in-game to open inventory!" << std::endl;
-    std::cout << "===================================" << std::endl;
-}*/
 
