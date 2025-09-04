@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <queue>  // for algorithm
 
 // ******************** TEMPLATED MAP CLASS ********************
 
@@ -86,6 +87,10 @@ private:
     bool DepthFirstSearch(Position current, Position target,
                           std::vector<std::vector<bool>>& visited) const;
     void EnsurePathExists();
+
+    // NEW: Enhanced path creation methods
+    void CreateFallbackPath();
+    void CreateGuaranteedPath();
 };
 
 // ******************** TEMPLATE IMPLEMENTATION ********************
@@ -154,12 +159,52 @@ void Map<TileContainer>::GenerateRandomMap() {
     PlaceItemsAndTreasureChests();  // Ensure this is called!
 }
 
+// UPDATED: Enhanced GenerateTerrainWithClustering with guaranteed path validation
 template<typename TileContainer>
 void Map<TileContainer>::GenerateTerrainWithClustering() {
-    PlaceStartAndEnd();
-    GenerateClusteredTerrain();
-    EnsurePathExists();
+    const int MAX_ATTEMPTS = 50;
+    int attempts = 0;
+
+    do {
+        attempts++;
+
+        // Clear the map first
+        InitializeMap();
+
+        // Always place start and end first
+        PlaceStartAndEnd();
+
+        // Generate terrain clusters
+        GenerateClusteredTerrain();
+
+        // Check if path exists
+        if (HasValidPath()) {
+            break; // Success!
+        }
+
+        // If no path exists, try to create one
+        if (attempts >= MAX_ATTEMPTS / 2) {
+            std::cout << "[WARNING] Attempt " << attempts << " - Creating fallback path" << std::endl;
+            CreateFallbackPath();
+
+            if (HasValidPath()) {
+                break;
+            }
+        }
+
+        if (attempts >= MAX_ATTEMPTS) {
+            std::cout << "[WARNING] Could not generate valid path after " << MAX_ATTEMPTS
+                      << " attempts. Creating simple guaranteed path." << std::endl;
+            CreateGuaranteedPath();
+            break;
+        }
+
+    } while (true);
+
+    // Always place items after terrain is finalized
     PlaceItemsAndTreasureChests();
+
+    std::cout << "[MAP] Valid path generated in " << attempts << " attempts." << std::endl;
 }
 
 template<typename TileContainer>
@@ -436,13 +481,126 @@ int Map<TileContainer>::CountWaterNeighbors(int x, int y) const {
     return count;
 }
 
+// UPDATED: Enhanced EnsurePathExists method
 template<typename TileContainer>
 void Map<TileContainer>::EnsurePathExists() {
-    // Simple path creation (at least one path down the middle)
+    if (HasValidPath()) {
+        return; // Path already exists, nothing to do
+    }
+
+    std::cout << "[MAP] No valid path found, creating one..." << std::endl;
+
+    // Try the fallback path first
+    CreateFallbackPath();
+
+    if (!HasValidPath()) {
+        // If that fails, use the guaranteed path
+        std::cout << "[MAP] Fallback path failed, using guaranteed path..." << std::endl;
+        CreateGuaranteedPath();
+    }
+
+    // Final verification
+    if (!HasValidPath()) {
+        std::cout << "[ERROR] Could not create valid path! Map may be broken." << std::endl;
+    } else {
+        std::cout << "[MAP] Valid path created successfully." << std::endl;
+    }
+}
+
+// NEW: CreateFallbackPath method
+template<typename TileContainer>
+void Map<TileContainer>::CreateFallbackPath() {
+    // Create a simple path from start to end
+    // First, create vertical path down from start
+    int current_x = start_pos_.x;
+
+    for (int y = start_pos_.y; y < height_; ++y) {
+        if (tiles_[y][current_x].GetType() != TileType::START &&
+            tiles_[y][current_x].GetType() != TileType::END) {
+            tiles_[y][current_x].SetType(TileType::TRAVERSABLE_DIRT);
+        }
+    }
+
+    // Then create horizontal path to end position
+    int target_x = end_pos_.x;
+    int start_x = std::min(current_x, target_x);
+    int end_x = std::max(current_x, target_x);
+
+    for (int x = start_x; x <= end_x; ++x) {
+        if (tiles_[height_ - 1][x].GetType() != TileType::END) {
+            tiles_[height_ - 1][x].SetType(TileType::TRAVERSABLE_DIRT);
+        }
+    }
+}
+
+// NEW: CreateGuaranteedPath method
+template<typename TileContainer>
+void Map<TileContainer>::CreateGuaranteedPath() {
+    // Nuclear option: create a clear path guaranteed to work
+
+    // Clear everything first
+    InitializeMap();
+
+    // Place start and end
+    PlaceStartAndEnd();
+
+    // Create a straight path down the middle
     int middle_x = width_ / 2;
+
+    // Vertical path from start row to bottom
     for (int y = 0; y < height_; ++y) {
-        if (Tile::IsBlockedType(tiles_[y][middle_x].GetType())) {
+        if (tiles_[y][middle_x].GetType() != TileType::START &&
+            tiles_[y][middle_x].GetType() != TileType::END) {
             tiles_[y][middle_x].SetType(TileType::TRAVERSABLE_DIRT);
+        }
+    }
+
+    // Horizontal paths to connect start and end to middle
+    // Connect start to middle
+    int start_x = start_pos_.x;
+    int start_min = std::min(start_x, middle_x);
+    int start_max = std::max(start_x, middle_x);
+
+    for (int x = start_min; x <= start_max; ++x) {
+        if (tiles_[0][x].GetType() != TileType::START) {
+            tiles_[0][x].SetType(TileType::TRAVERSABLE_DIRT);
+        }
+    }
+
+    // Connect end to middle
+    int end_x = end_pos_.x;
+    int end_min = std::min(end_x, middle_x);
+    int end_max = std::max(end_x, middle_x);
+
+    for (int x = end_min; x <= end_max; ++x) {
+        if (tiles_[height_ - 1][x].GetType() != TileType::END) {
+            tiles_[height_ - 1][x].SetType(TileType::TRAVERSABLE_DIRT);
+        }
+    }
+
+    // Add some decorative terrain that doesn't block the path
+    // Place some scattered blocked tiles away from the main paths
+    int decoration_count = width_ * height_ / 10;
+    for (int i = 0; i < decoration_count; ++i) {
+        int x = GetRandomValue(0, width_ - 1);
+        int y = GetRandomValue(1, height_ - 2);
+
+        // Don't place on the guaranteed path
+        if (x == middle_x ||
+            (y == 0 && x >= start_min && x <= start_max) ||
+            (y == height_ - 1 && x >= end_min && x <= end_max) ||
+            Position(x, y) == start_pos_ ||
+            Position(x, y) == end_pos_) {
+            continue;
+        }
+
+        // Only place if it won't break the path
+        TileType old_type = tiles_[y][x].GetType();
+        tiles_[y][x].SetType(Tile::GetRandomBlockedType());
+
+        // Verify path still exists
+        if (!HasValidPath()) {
+            tiles_[y][x].SetType(old_type); // Restore if it breaks path
         }
     }
 }
@@ -477,9 +635,45 @@ bool Map<TileContainer>::IsValidPosition(const Position& pos) const {
     return IsValidPosition(pos.x, pos.y);
 }
 
+// UPDATED: Enhanced HasValidPath method using BFS
 template<typename TileContainer>
 bool Map<TileContainer>::HasValidPath() const {
-    return ValidatePathExists();
+    // Use flood fill algorithm (BFS) to check if end is reachable from start
+    std::vector<std::vector<bool>> visited(height_, std::vector<bool>(width_, false));
+    std::queue<Position> to_visit;
+
+    to_visit.push(start_pos_);
+    visited[start_pos_.y][start_pos_.x] = true;
+
+    // Directions: up, down, left, right
+    const int dx[] = {0, 0, -1, 1};
+    const int dy[] = {-1, 1, 0, 0};
+
+    while (!to_visit.empty()) {
+        Position current = to_visit.front();
+        to_visit.pop();
+
+        // Check if we reached the end
+        if (current == end_pos_) {
+            return true;
+        }
+
+        // Check all 4 directions
+        for (int i = 0; i < 4; i++) {
+            int new_x = current.x + dx[i];
+            int new_y = current.y + dy[i];
+
+            // Check bounds
+            if (new_x >= 0 && new_x < width_ && new_y >= 0 && new_y < height_) {
+                if (!visited[new_y][new_x] && tiles_[new_y][new_x].IsTraversable()) {
+                    visited[new_y][new_x] = true;
+                    to_visit.push(Position(new_x, new_y));
+                }
+            }
+        }
+    }
+
+    return false; // End not reachable
 }
 
 template<typename TileContainer>
@@ -574,7 +768,7 @@ void Map<TileContainer>::Render(int offset_x, int offset_y, int tile_size) const
                     Rectangle dest = {(float)sparkle_x, (float)sparkle_y, (float)sparkle_size, (float)sparkle_size};
 
                     // Add slight rotation for more dynamic effect
-                    float rotation = time * 30.0f; // Slow rotation
+                    float rotation = time * 30.0f; // // Slow rotation
                     Vector2 origin = {sparkle_size / 2.0f, sparkle_size / 2.0f};
 
                     DrawTexturePro(sparkle_texture, source, dest, origin, rotation, sparkle_color);

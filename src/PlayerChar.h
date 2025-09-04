@@ -4,18 +4,18 @@
 
 #include "Character.h"
 #include "inventory/Inventory.h"
+#include "inventory/EquipmentSlot.h"
 //#include "inventory/InventorySystem.h"
 #include "Map.h"
 #include <memory>
 
-// ******************** PLAYER CHARACTER CLASS ********************
+// Forward declaration
+class InventorySystem;
 
 class PlayerChar : public Character {
 public:
     // Constructor
     PlayerChar(const Position& start_position, int base_strength = 10);
-
-    // Destructor
     ~PlayerChar();
 
     // Interface for traversing the map
@@ -29,20 +29,14 @@ public:
     bool TryMoveRight();
     void SetMap(Map<>* map) { current_map_ = map; }
 
-    // Inventory integration
-    //InventorySystem& GetInventorySystem() { return *inventory_system_; }
-    //const InventorySystem& GetInventorySystem() const { return *inventory_system_; }
-    Inventory<std::vector>* GetInventory() {
-        return inventory_.get(); // Return raw pointer to the inventory
-    }
-    const Inventory<std::vector>* GetInventory() const {
-        return inventory_.get();
-    }
+    // FIXED: Inventory access - return pointer to actual inventory
+    Inventory<std::vector>* GetInventory() { return inventory_.get(); }
+    const Inventory<std::vector>* GetInventory() const { return inventory_.get(); }
 
     // Strength system
-    int GetStrength() const override; // Base + equipment bonuses
-    int GetTotalStrength() const { return GetStrength(); } // Alias for compatibility
-    float GetMaxCarryWeight() const; // Based on total strength
+    int GetStrength() const override;
+    int GetTotalStrength() const { return GetStrength(); }
+    float GetMaxCarryWeight() const;
     float GetCurrentWeight() const;
     bool IsOverweight() const;
 
@@ -54,10 +48,10 @@ public:
     bool EquipSelectedItem(EquipmentSlotType slot_type);
     bool UnequipItem(EquipmentSlotType slot_type);
 
-    // Player methods -> use base class health system
+    // Player methods
     void SetName(const std::string& name) override { Character::SetName(name); }
-    void PrintStatus() const override; // Enhanced version showing inventory info
-    void Update() override; // Player-specific update logic
+    void PrintStatus() const override;
+    void Update() override;
 
     // Rendering
     void Render(int screen_x, int screen_y, int tile_size) const override;
@@ -68,8 +62,7 @@ public:
     void CheckItemsAtCurrentPosition() const;
 
 private:
-    // Inventory
-    //std::unique_ptr<InventorySystem> inventory_system_;
+    // SINGLE inventory - owned by player
     std::unique_ptr<Inventory<std::vector>> inventory_;
 
     // Map reference
@@ -83,7 +76,5 @@ private:
     bool IsValidPosition(const Position& pos) const;
     void UpdateStrengthFromEquipment();
 };
-
-
 
 #endif //RAYLIBSTARTER_PLAYERCHAR_H

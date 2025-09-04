@@ -182,7 +182,7 @@ void Game::HandleInput() {
                 }
             }
 
-            // FIXED: Automated traversal controls - A now toggles start/stop
+            // Automated traversal controls
             if (IsKeyPressed(KEY_A)) {
                 if (automated_traversal_->IsActive()) {
                     // Stop automated traversal if it's running
@@ -390,37 +390,37 @@ void Game::InitializeRaylib() {
 }
 
 void Game::InitializeGameSystems() {
-    // Load all textures through TextureManager
+    // Load textures
     TextureManager::LoadAllTextures();
 
-    // Initialize map with default size (15x15)
+    // Initialize map
     game_map_ = std::make_unique<Map<>>(15, 15);
 
-    // Create player character at start position
+    // !!!Create player first
     Position start_pos = game_map_->GetStartPosition();
     player_character_ = std::make_unique<PlayerChar>(start_pos, 10);
     player_character_->SetMap(game_map_.get());
 
-    // !!!! Initialize inventory system with player's inventory
+    // !!!Create inventory system that connects to player's inventory
     inventory_system_ = std::make_unique<InventorySystem>(player_character_.get());
 
-    // Initialize pathfinding system
+    // Initialize other systems
     pathfinding_system_ = std::make_unique<Pathfinding>();
-
-    // Initialize automated traversal
     automated_traversal_ = std::make_unique<AutomatedTraversal>();
 
-    // Some test items for inventory demonstration
-    inventory_system_->AddItemToInventory(std::make_unique<WeaponSword>());
-    inventory_system_->AddItemToInventory(std::make_unique<ArmorKittyBoots>());
-    inventory_system_->AddItemToInventory(std::make_unique<AccessoryLuckyPaw>());
+    // Debug verification
+    if (player_character_->GetInventory()) {
+        std::cout << "[INIT] Player inventory connected successfully" << std::endl;
+    } else {
+        std::cout << "[ERROR] Player inventory is null!" << std::endl;
+    }
 
     // Print initial map info
-    std::cout << "\n*** INITIAL MAP ***" << std::endl;
+    std::cout << "\n=== INITIAL KITTY MAP ===" << std::endl;
     game_map_->RenderConsole();
     game_map_->PrintMapInfo();
     game_map_->GetItemManager().PrintItemsInfo();
-    std::cout << "**********************" << std::endl;
+    std::cout << "=========================" << std::endl;
 }
 
 void Game::UpdateGameLogic() {

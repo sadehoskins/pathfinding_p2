@@ -2,6 +2,7 @@
 #include "items/base-classes/WeaponItem.h"
 #include "items/base-classes/ArmorItem.h"
 #include "items/base-classes/AccessoryItem.h"
+#include "inventory/EquipmentSlot.h"
 #include <iostream>
 #include <iomanip>
 
@@ -137,7 +138,7 @@ void AutomatedTraversal::ProcessCurrentStep() {
     current_step_++;
     UpdateStatusMessage();
 
-    // Check if we've reached the end
+    // Check if end reached is reached
     if (current_step_ >= static_cast<int>(calculated_path_.size())) {
         CompleteTraversal();
     }
@@ -153,25 +154,21 @@ void AutomatedTraversal::HandleItemPickup(const Position& pos) {
 
     for (const auto* item_with_pos : items) {
         if (!item_with_pos->is_in_treasure_chest) {
-            // Try to pick up hidden item
-            std::cout << "Found hidden item: " << item_with_pos->item->GetName()
+            std::cout << "[PICKUP] Found hidden item: " << item_with_pos->item->GetName()
                       << " (weight: " << item_with_pos->item->GetWeight() << "kg)" << std::endl;
 
-            // Check if player can carry it
-            float item_weight = item_with_pos->item->GetWeight();
-            if (player_character_->GetCurrentWeight() + item_weight <= player_character_->GetMaxCarryWeight()) {
-                // Use the player character's pickup method
-                if (player_character_->PickUpItemAt(pos)) {
-                    items_picked_up_++;
-                    total_items_found_++;
-                    std::cout << "Successfully picked up: " << item_with_pos->item->GetName() << std::endl;
-                } else {
-                    std::cout << "Failed to pick up item (inventory full)" << std::endl;
-                }
+            // Use PlayerChar's pickup method to avoid duplicates
+            bool picked_up = player_character_->PickUpItemAt(pos);
+
+            if (picked_up) {
+                items_picked_up_++;
+                total_items_found_++;
+                std::cout << "[SUCCESS] Successfully picked up item!" << std::endl;
             } else {
-                std::cout << "⚖Too heavy to pick up (would exceed weight limit)" << std::endl;
+                std::cout << "[WARNING] Could not pick up item (inventory full or insufficient strength)" << std::endl;
             }
-            break; // Only pick up one item per step
+
+            break; // Only pick up one item per step to avoid duplicates
         }
     }
 
@@ -179,15 +176,14 @@ void AutomatedTraversal::HandleItemPickup(const Position& pos) {
     if (game_map_->HasTreasureChestAt(pos)) {
         const Tile& tile = game_map_->GetTile(pos);
         if (tile.IsClosedTreasureChest()) {
-            std::cout << "Found treasure chest! Opening..." << std::endl;
+            std::cout << "[TREASURE] Found treasure chest at (" << pos.x << ", " << pos.y << ")!" << std::endl;
 
-            // Try to pick up from treasure chest
-            if (player_character_->PickUpItemAt(pos)) {
+            // Use PlayerChar's pickup method for consistency
+            bool opened = player_character_->PickUpItemAt(pos);
+            if (opened) {
                 items_picked_up_++;
                 total_items_found_++;
-                std::cout << "Successfully looted treasure chest!" << std::endl;
-            } else {
-                std::cout << "Treasure chest full or inventory full" << std::endl;
+                std::cout << "[SUCCESS] Opened treasure chest!" << std::endl;
             }
         }
     }
@@ -199,45 +195,53 @@ void AutomatedTraversal::HandleAutoEquipment() {
     }
 
     auto* inventory = player_character_->GetInventory();
+    if (!inventory) {
+        std::cout << "[ERROR] Player inventory is null!" << std::endl;
+        return;
+    }
 
-    // Check each inventory slot for potentially better equipment
+    // Check all inventory slots for equipable items
     for (int slot = 0; slot < inventory->GetMaxSlots(); ++slot) {
         const ItemBase* item = inventory->GetItem(slot);
         if (!item) continue;
 
-        // Check weapons
-        if (const WeaponItem* weapon = dynamic_cast<const WeaponItem*>(item)) {
-            // Use internal inventory access to check equipped weapon
-            bool should_equip = true;
-            int current_weapon_strength = 0;
+        // Determine what type of item this is
+        EquipmentSlotType target_slot;
+        bool is_equipable = false;
 
-            // Check if there's already a weapon equipped by trying to get current strength bonus
-            int total_strength_before = inventory->GetTotalStrengthBonus();
-
-            // Temporarily check what the strength would be if we equipped this weapon
-            // For now, we'll use a simpler approach: just equip if it has better strength than 0
-            // or if we can determine no weapon is currently equipped
-
-            if (inventory->EquipItem(slot, EquipmentSlotType::WEAPON)) {
-                items_equipped_++;
-                std::cout << "⚔️  Auto-equipped weapon: " << weapon->GetName()
-                          << " (+" << weapon->GetStrengthBonus() << " STR)" << std::endl;
-            }
+        if (dynamic_cast<const WeaponItem*>(item)) {
+            target_slot = EquipmentSlotType::WEAPON;
+            is_equipable = true;
+        } else if (dynamic_cast<const ArmorItem*>(item)) {
+            target_slot = EquipmentSlotType::ARMOR;
+            is_equipable = true;
+        } else if (dynamic_cast<const AccessoryItem*>(item)) {
+            target_slot = EquipmentSlotType::ACCESSORY;
+            is_equipable = true;
         }
-            // Check armor
-        else if (const ArmorItem* armor = dynamic_cast<const ArmorItem*>(item)) {
-            if (inventory->EquipItem(slot, EquipmentSlotType::ARMOR)) {
+
+        if (!is_equipable) continue;
+
+        // Check if this item is better than currently equipped
+        const ItemBase* current_equipped = inventory->GetEquippedItem(target_slot);
+
+        if (ShouldAutoEquipItem(item, current_equipped)) {
+            if (inventory->EquipItem(slot, target_slot)) {
                 items_equipped_++;
-                std::cout << "🛡️  Auto-equipped armor: " << armor->GetName()
-                          << " (+" << armor->GetStrengthBonus() << " STR)" << std::endl;
-            }
-        }
-            // Check accessories
-        else if (const AccessoryItem* accessory = dynamic_cast<const AccessoryItem*>(item)) {
-            if (inventory->EquipItem(slot, EquipmentSlotType::ACCESSORY)) {
-                items_equipped_++;
-                std::cout << "💍 Auto-equipped accessory: " << accessory->GetName()
-                          << " (+" << accessory->GetStrengthBonus() << " STR)" << std::endl;
+
+                int str_bonus = 0;
+                if (const WeaponItem* weapon = dynamic_cast<const WeaponItem*>(item)) {
+                    str_bonus = weapon->GetStrengthBonus();
+                } else if (const ArmorItem* armor = dynamic_cast<const ArmorItem*>(item)) {
+                    str_bonus = armor->GetStrengthBonus();
+                } else if (const AccessoryItem* accessory = dynamic_cast<const AccessoryItem*>(item)) {
+                    str_bonus = accessory->GetStrengthBonus();
+                }
+
+                std::cout << "[EQUIP] Auto-equipped " << GetEquipmentSlotName(target_slot)
+                          << ": " << item->GetName() << " (+" << str_bonus << " STR)" << std::endl;
+
+                break; // Only equip one item per step to avoid chaos
             }
         }
     }
