@@ -6,7 +6,7 @@
 
 // ******************** STATIC CONSTANTS ********************
 
-const char* Game::kProjectName = "2D Map Generator - Task 1c";
+const char* Game::kProjectName = "2D Kitty Generator";
 
 // ******************** CONSTRUCTOR & DESTRUCTOR ********************
 
@@ -112,57 +112,57 @@ void Game::HandleInput() {
             // Sorting controls (moved outside inventory check)
             if (IsKeyPressed(KEY_ONE)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by WEIGHT..." << std::endl;
+                    std::cout << "\n Sorting inventory by WEIGHT..." << std::endl;
                     inventory_system_->SortByWeight(true);
                 }
             }
             if (IsKeyPressed(KEY_TWO)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by NAME..." << std::endl;
+                    std::cout << "\n Sorting inventory by NAME..." << std::endl;
                     inventory_system_->SortByName(true);
                 }
             }
             if (IsKeyPressed(KEY_THREE)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by VALUE..." << std::endl;
+                    std::cout << "\n Sorting inventory by VALUE..." << std::endl;
                     inventory_system_->SortByValue(false); // High to low
                 }
             }
             if (IsKeyPressed(KEY_FOUR)) {
                 if (inventory_system_) {
-                    std::cout << "\n🔸 Sorting inventory by TYPE..." << std::endl;
+                    std::cout << "\n Sorting inventory by TYPE..." << std::endl;
                     inventory_system_->SortByType(true);
                 }
             }
             // Demo controls
             if (IsKeyPressed(KEY_SIX)) {
                 if (inventory_system_) {
-                    std::cout << "\n🎯 Generating test inventory for sorting demo..." << std::endl;
+                    std::cout << "\n Generating test inventory for sorting demo..." << std::endl;
                     inventory_system_->GenerateTestInventory();
                 }
             }
             if (IsKeyPressed(KEY_SEVEN)) {
                 if (inventory_system_) {
-                    std::cout << "\n🎯 Running complete sorting demonstration..." << std::endl;
+                    std::cout << "\n Running complete sorting demonstration..." << std::endl;
                     inventory_system_->RunSortingDemo();
                 }
             }
             // Pathfinding
             if (IsKeyPressed(KEY_EIGHT)) {
                 if (pathfinding_system_ && game_map_) {
-                    std::cout << "\n🔍 Running pathfinding demonstration..." << std::endl;
+                    std::cout << "\n Running pathfinding demonstration..." << std::endl;
                     pathfinding_system_->DemoPathfinding(*game_map_);
                 }
             }
             if (IsKeyPressed(KEY_NINE)) {
                 if (pathfinding_system_ && game_map_) {
-                    std::cout << "\n⚔️ Comparing A* vs Dijkstra algorithms..." << std::endl;
+                    std::cout << "\n Comparing A* vs Dijkstra algorithms..." << std::endl;
                     pathfinding_system_->CompareAlgorithms(*game_map_);
                 }
             }
             if (IsKeyPressed(KEY_ZERO)) {
                 if (pathfinding_system_ && game_map_ && player_character_) {
-                    std::cout << "\n🎯 Finding path from player to end..." << std::endl;
+                    std::cout << "\n Finding path from player to end..." << std::endl;
                     Position player_pos = player_character_->GetPosition();
                     Position end_pos = game_map_->GetEndPosition();
 
@@ -178,23 +178,23 @@ void Game::HandleInput() {
             }
 
             // Automated traversal controls
-            if (IsKeyPressed(KEY_A) && !automated_traversal_->IsActive()) {
+            if (IsKeyPressed(KEY_Q) && !automated_traversal_->IsActive()) {
                 if (automated_traversal_ && pathfinding_system_ && game_map_ && player_character_) {
-                    std::cout << "\n🤖 Starting automated traversal to end position..." << std::endl;
+                    std::cout << "\n Starting automated traversal to end position..." << std::endl;
                     bool success = automated_traversal_->StartAutomatedTraversal(
                             player_character_.get(), game_map_.get(), pathfinding_system_.get());
 
                     if (success) {
-                        std::cout << "✅ Automated traversal started successfully!" << std::endl;
-                        std::cout << "🎮 Sit back and watch the AI navigate!" << std::endl;
+                        std::cout << " Automated traversal started successfully!" << std::endl;
+                        std::cout << " Sit back and watch the AI navigate!" << std::endl;
                     } else {
-                        std::cout << "❌ Could not start automated traversal." << std::endl;
+                        std::cout << " Could not start automated traversal." << std::endl;
                     }
                 }
             }
-            if (IsKeyPressed(KEY_S) && automated_traversal_->IsActive()) {
+            if (IsKeyPressed(KEY_Y) && automated_traversal_->IsActive()) {
                 // Stop automated traversal
-                std::cout << "\n🛑 Stopping automated traversal..." << std::endl;
+                std::cout << "\n Stopping automated traversal..." << std::endl;
                 automated_traversal_->Stop();
             }
             if (IsKeyPressed(KEY_V)) {
@@ -450,8 +450,8 @@ void Game::RenderGame() {
 
     switch (current_state_) {
         case GameState::MENU:
-            DrawText("2D MAP GENERATOR - TASK 1C", 150, 180, 40, DARKGRAY);
-            DrawText("Features: Treasure Chests & Items!", 200, 230, 20, GRAY);
+            DrawText("2D Kitty MAP GENERATOR", 150, 180, 40, DARKGRAY);
+            DrawText("Explore Adventures with your kitty!", 200, 230, 20, GRAY);
             DrawText("Press ENTER to start", 250, 300, 20, GRAY);
             DrawText("Press ALT+ENTER for fullscreen", 220, 350, 16, LIGHTGRAY);
             break;
@@ -527,7 +527,7 @@ void Game::RenderGame() {
                          automated_traversal_->IsComplete() ? GREEN : YELLOW);
 
                 if (automated_traversal_->IsMoving()) {
-                    DrawText("🤖 AI is navigating...", 10, 325, 16, SKYBLUE);
+                    DrawText("Kitty AI is navigating...", 10, 325, 16, SKYBLUE);
                 }
             }
 
@@ -574,10 +574,10 @@ void Game::RenderUI() {
     // Show controls based on current state
     if (current_state_ == GameState::PLAYING) {
         if (automated_traversal_ && automated_traversal_->IsActive()) {
-            DrawText("AUTOMATED MODE: S=Stop | V=ToggleViz | M=Summary | I=Inventory | 1-4=Sort",
+            DrawText("AUTOMATED MODE: Y=Stop | V=ToggleViz | M=Summary | I=Inventory | 1-4=Sort",
                      10, GetScreenHeight() - 30, 8, YELLOW);
         } else {
-            DrawText("Controls: WASD=Move | F=Pick | A=AutoTraversal | I=Inventory | 8=Pathfind | 1-4=Sort | 6=TestItems | 7=Demo",
+            DrawText("Controls: WASD=Move | F=Pick | Q=AutoTraversal | I=Inventory | 8=Pathfind | 1-4=Sort | 6=TestItems | 7=Demo",
                      10, GetScreenHeight() - 30, 7, DARKGRAY);
         }
 
